@@ -1,26 +1,37 @@
 #!/usr/bin/bash
 
-if [ -f "$HOME"/keysnet ]; then
-	source "$HOME"/keysnet
+if [ -f "$HOME/keysnet" ]; then
+	source "$HOME/keysnet"
 else
-	echo "keys file file not found"
+	echo "keys file not found"
+	exit 1
 fi
-
-renderer_n=networkd
-renderer_N=NetworkManager
-lan_name=enp2s0
-# radio_adapter=wlx60e32716669c
 
 name_point=2 #1,2,3
 # var_routes=  #0,1
 dhcp4=0 #1=true(dinamyc)/0=no(static)
 
+interface=1 #1-wi-fi 2-lan
+
+renderer_n=networkd
+renderer_N=NetworkManager
+
 if [ "$HOSTNAME" = vaio ]; then
 	radio_adapter=wlp7s0
+	# lan_adapter=enp2s0
 	ip=9
 elif [ "$HOSTNAME" = pcRU ]; then
 	radio_adapter=wlx60e32716669c
+	lan_adapter=enp2s0
 	ip=27
+fi
+
+if [ "$interface" = 1 ]; then
+	interf=wifis
+	adapter=$radio_adapter
+elif [ "$interface" = 2 ]; then
+	interf=ethernets
+	adapter=$lan_adapter
 fi
 
 if [ $name_point = 1 ]; then
@@ -45,7 +56,7 @@ fi
 if [ $dhcp4 = 1 ]; then
 	dhcp4_ref=true
 else
-	dhcp4_ref=false
+	dhcp4_ref=no
 fi
 
 dhcp4_addresses=[192.168.$var_routes.$ip/24]
@@ -57,13 +68,13 @@ echo_f() {
 	echo "network:                               "
 	echo "  version: 2                           "
 	echo "  renderer: $renderer_N                "
-	echo "  wifis:                               "
-	echo "    $radio_adapter:                    "
+	echo "  $interf:                             "
+	echo "    $adapter:                          "
+}
+wifi_dhcp() {
 	echo "      access-points:                   "
 	echo "        $wan_pt:                       "
 	echo "          password: $wan_pass          "
-}
-dhcp4_f() {
 	echo "      dhcp4: $dhcp4_ref                "
 }
 dhcp4_stat() {
@@ -88,22 +99,29 @@ if [ ! -f "$net_file" ]; then
 	# chmod 600 "$net_file"
 fi
 
-if [ $dhcp4 = 1 ]; then
+if [ $interface = 1 ]; then
+	if [ $dhcp4 = 1 ]; then
+		up() {
+			echo_f
+			wifi_dhcp
+		}
+	elif [ $dhcp4 = 0 ]; then
+		up() {
+			echo_f
+			wifi_dhcp
+			dhcp4_stat
+		}
+	fi
+elif [ $interface = 2 ]; then
 	up() {
 		echo_f
-		dhcp4_f
-	}
-else
-	up() {
-		echo_f
-		dhcp4_f
 		dhcp4_stat
 	}
 fi
 
 up >"$net_file"
 
-sudo netplan apply
+netplan apply
 
 function whatsmyip() {
 	# Internal IP Lookup
