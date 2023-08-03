@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/bash
 
 if [ -f "$HOME"/keysnet ]; then
 	source "$HOME"/keysnet
@@ -9,18 +9,26 @@ fi
 renderer_n=networkd
 renderer_N=NetworkManager
 lan_name=enp2s0
-wan_name=wlx60e32716669c
+# radio_adapter=wlx60e32716669c
 
 name_point=2 #1,2,3
 # var_routes=  #0,1
-dhcp4=1 #1=true/2=no
+dhcp4=0 #1=true/0=no
+
+if [ "$HOSTNAME" = vaio ]; then
+	radio_adapter=wlp7s0
+	port=9
+elif [ "$HOSTNAME" = pcRU ]; then
+	radio_adapter=wlx60e32716669c
+	port=27
+fi
 
 echo_f() {
 	echo "network:                               "
 	echo "  version: 2                           "
 	echo "  renderer: $renderer_N                "
 	echo "  wifis:                               "
-	echo "    $wan_name:                         "
+	echo "    $radio_adapter:                         "
 	echo "      access-points:                   "
 	echo "        $wan_pt:                       "
 	echo "          password: $wan_pass          "
@@ -57,7 +65,7 @@ if [ $name_point == 3 ]; then
 	# var_routes=0
 fi
 
-dhcp4_addresses=[192.168.$var_routes.27/24]
+dhcp4_addresses=[192.168.$var_routes.$port/24]
 routes_via=192.168.$var_routes.1
 nameserv_addr_def=[8.8.8.8,8.8.4.4]
 nameserv_addr=[192.168.$var_routes.1,8.8.8.8]
