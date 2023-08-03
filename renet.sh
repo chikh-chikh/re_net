@@ -13,7 +13,7 @@ lan_name=enp2s0
 
 name_point=2 #1,2,3
 # var_routes=  #0,1
-dhcp4=1 #1=true(static)/0=no(dynamyc)
+dhcp4=0 #1=true(dinamyc)/0=no(static)
 
 if [ "$HOSTNAME" = vaio ]; then
 	radio_adapter=wlp7s0
@@ -102,5 +102,23 @@ else
 fi
 
 up >"$net_file"
+
+sudo netplan apply
+
+function whatsmyip() {
+	# Internal IP Lookup
+	echo -n "Internal IP: "
+	# ifconfig enp2s0 \
+	ifconfig "$radio_adapter" |
+		# grep "inet" | awk -F: '{print $2}' | awk '{print $1}'
+		grep "inet " | awk -F: '{print $1}' | awk '{print $2}'
+	# External IP Lookup
+	echo -n "External IP: "
+	# wget http://smart-ip.net/myip -O - -q
+	dig @resolver4.opendns.com myip.opendns.com +short
+}
+sleep 2
+
+whatsmyip
 
 #run this script with sudo -E -s ./renet.sh
