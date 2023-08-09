@@ -7,9 +7,9 @@ else
 	exit 1
 fi
 
-name_point=2 #1,2,3
+name_point=3 #1,2,3
 # var_routes=  #0,1
-dhcp4=0 #1=true(dinamyc)/0=no(static)
+dhcp4=1 #1=true(dinamyc)/0=no(static)
 
 interface=1 #1-wi-fi 2-lan
 
@@ -48,9 +48,9 @@ if [ $name_point = 2 ]; then
 fi
 
 if [ $name_point = 3 ]; then
-	wan_pt=$wan_point2
+	wan_pt=$wan_point3
 	wan_pass=$wan_pass_point3
-	# var_routes=0
+	var_routes=0
 fi
 
 if [ $dhcp4 = 1 ]; then
@@ -88,8 +88,8 @@ dhcp4_stat() {
 
 net_dir=/etc/netplan
 # net_dir=$(pwd)
-net_file=$net_dir/01-"$wan_pt"-dhcp4-"$dhcp4_ref".yaml
-# net_file="$net_dir"/01-config.yaml
+# net_file=$net_dir/01-"$wan_pt"-dhcp4-"$dhcp4_ref".yaml
+net_file="$net_dir"/01-config.yaml
 # net_file="$net_dir"/01-config.yaml
 
 rm -rf "$net_dir"/01-*.yaml
