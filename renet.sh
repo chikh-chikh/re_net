@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
-if [ -f "$HOME/keysnet" ]; then
-	source "$HOME/keysnet"
+if [ -f "$KEYSDIR/keysnet" ]; then
+	command source "$KEYSDIR/keysnet"
 else
 	echo "keys file not found"
 	exit 1
