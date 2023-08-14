@@ -11,4 +11,5 @@ for i in "$@"; do
 done
 export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/${KEY} -p ${PORT}"
 echo Command: "$GIT_SSH_COMMAND"
+# if root without -E -s flags
 # ssh -o UserKnownHostsFile=/path/to/other/known_hosts -v localhost

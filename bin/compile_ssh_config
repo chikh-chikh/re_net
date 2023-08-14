@@ -1,0 +1,11 @@
+#!/bin/sh
+rm ~/.ssh/config
+cat ~/conf/myservers.sshconfig >>~/.ssh/config
+
+[ -f ~/conf/workservers.sshconfig ] && cat ~/conf/workservers.sshconfig >>~/.ssh/config
+(or something like this:)
+for i in ls ~/conf/sshconfigs; do
+	cat $i >>~/.ssh/config
+done
+
+chmod 600 ~/.ssh/config
