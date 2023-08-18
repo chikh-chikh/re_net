@@ -7,6 +7,7 @@ iptables --delete-chain
 ##INPUT
 #разрешить обратную связь
 iptables -A INPUT -i lo -j ACCEPT
+<<<<<<< HEAD
 #разрешить установленные подключения
 # iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 #разрешить SSH или какой-нибудь другой TCP порт
@@ -15,20 +16,67 @@ iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 9027 -j ACCEPT
 #разрешить UDP на порту 22
 iptables -A INPUT -m state --state NEW -p udp --dport 9027 -j ACCEPT
 
+=======
+
+#разрешает установленный и связанный входящий трафик, чтобы сервер разрешал
+#обратный трафик для исходящих подключений, инициированных самим сервером.
+iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+#разрешить установленные подключения
+# iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+#разрешить SSH или какой-нибудь другой TCP порт
+#чтобы разрешить все входящие ssh-соединения:
+iptables -A INPUT -p tcp --dport 9027 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+# iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 9027 -j ACCEPT
+# iptables -A INPUT -p tcp --dport 9027 -j ACCEPT
+#Разрешение входящего SSH с определенного IP-адреса или подсети
+# iptables -A INPUT -p tcp -s 203.0.113.0/24 --dport 22 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+# Разрешение исходящего SSH
+sudo iptables -A INPUT -p tcp --sport 22 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+#разрешить UDP на порту 22
+# iptables -A INPUT -m state --state NEW -p udp --dport 9027 -j ACCEPT
+
+#web
+>>>>>>> cfea958 (after reinit git)
 # iptables -A INPUT -i lo -p udp -s 127.0.0.1 -d 127.0.1.1 --sport 40000:65535 --dport 53 -m limit --limit 50/s -j ACCEPT
 # iptables -A INPUT -i lo -p udp -d 127.0.0.1 -s 127.0.1.1 --dport 40000:65535 --sport 53 -m limit --limit 50/s -j ACCEPT
 iptables -A INPUT -p udp -s 8.8.4.4 --sport 53 -m limit --limit 50/s -j ACCEPT
 iptables -A INPUT -p udp -s 8.8.8.8 --sport 53 -m limit --limit 50/s -j ACCEPT
+<<<<<<< HEAD
 iptables -A INPUT -p tcp -m multiport --sports 443,80 -m state --state NEW,ESTABLISHED -m limit --limit 50/s -j ACCEPT
+=======
+# iptables -A INPUT -p tcp -m multiport --sports 443,80 -m state --state NEW,ESTABLISHED -m limit --limit 50/s -j ACCEPT
+#Разрешение всех входящих HTTP и HTTPS
+iptables -A INPUT -p tcp -m multiport --dports 80,443 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+>>>>>>> cfea958 (after reinit git)
 
 ##OUTPUT
 #разрешить обратную связь
 iptables -A OUTPUT -o lo -j ACCEPT
+<<<<<<< HEAD
 iptables -A OUTPUT -p tcp -m multiport --dports 80,443 -j ACCEPT
 
 #политики по умолчанию
 iptables -P INPUT DROP
 iptables -P OUTPUT DROP
+=======
+#разрешить исходящий трафик всех установленных подключений, которые обычно
+#являются ответом на законные входящие подключения.
+iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED -j ACCEPT
+#чтобы разрешить все входящие ssh-соединения, если OUTPUT политика не установлена на ACCEPT
+# iptables -A OUTPUT -p tcp --sport 22 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+#Разрешение входящего SSH с определенного IP-адреса или подсети, если OUTPUT политика не установлена на ACCEPT
+# iptables -A OUTPUT -p tcp --sport 22 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+#Разрешение исходящего SSH, если OUTPUT политика не установлена на ACCEPT
+# iptables -A OUTPUT -p tcp --dport 22 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+#Разрешение всех исходяцих HTTP и HTTPS, если для OUTPUT политики не задано значение ACCEPT.
+# iptables -A OUTPUT -p tcp -m multiport --dports 80,443 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+# iptables -A OUTPUT -p tcp -m multiport --dports 80,443 -j ACCEPT
+
+#политики по умолчанию
+iptables -P INPUT DROP
+# iptables -P OUTPUT DROP
+>>>>>>> cfea958 (after reinit git)
 # iptables -P FORWARD DROP
 #Сохранить
 iptables-save
