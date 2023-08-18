@@ -42,34 +42,25 @@ PASS_POINT=$wan_pass_point3
 DHCP4_REF="${dhcp4_ref[0]}"
 VAR_ROUTES="${var_routes[0]}"
 
-for i in "$@"; do
-	case $i in
-	--point=*)
-		POINT="${i:8}"
-		;;
-	--pass=*)
-		PASS_POINT="${i:7}"
-		;;
-	esac
-done
-
 # for i in "$@"; do
 # 	case $i in
-# 	--point=*)
-# 		POINT=\$wan_point${i:8}
-# 		PASS_POINT=\$wan_pass_point${i:8}
+# 	--point=*) #wan_point{1,2,3}
+# 		POINT="${i:8}"
+# 		;;
+# 	--pass=*) #wan_pass_point{1,2,3}
+# 		PASS_POINT="${i:7}"
 # 		;;
 # 	esac
 # done
-#
-# f_point() {
-# 	eval echo "$POINT"
-# }
-# f_pass_point() {
-# 	eval echo "$PASS_POINT"
-# }
-# f_point
-# f_pass_point
+
+for i in "$@"; do
+	case $i in
+	--point=*) #1,2,3
+		eval POINT=\$wan_point"${i:8}"
+		eval PASS_POINT=\$wan_pass_point"${i:8}"
+		;;
+	esac
+done
 
 dhcp4_addresses=[192.168."${VAR_ROUTES}".$ip/24]
 routes_via=192.168."${VAR_ROUTES}".1
