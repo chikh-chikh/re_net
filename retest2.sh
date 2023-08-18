@@ -120,24 +120,21 @@ elif [ "$INTERFACE" = ethernets ]; then
 		dhcp4_stat
 	}
 fi
-
 # up >"$net_file"
 
 # net_dir=/etc/netplan
 net_dir=$(pwd)
 # net_file="$net_dir/01-$POINT-dhcp4-$DHCP4_REF.yaml"
 net_file="$net_dir"/01-config.yaml
-# net_file="$net_dir"/01-config.yaml
-
 # rm -rf "$net_dir"/01-*.yaml
-
-if [ ! -f "$net_file" ]; then
-	touch "$net_file"
-	# chmod 600 "$net_file"
-fi
+# if [ ! -f "$net_file" ]; then
+# 	touch "$net_file"
+# 	# chmod 600 "$net_file"
+# fi
 
 # Menu TUI
 echo -e "\u001b${GREEN} Setting up netplan...${RC}"
+echo -e "$(up)"
 echo -e "  \u001b${BLUE} (y) confirm ${RC}"
 echo -e "  \u001b${BLUE} (n) nonconfirm ${RC}"
 echo -e "  \u001b${RED} (*) Anything else to exit ${RC}"
