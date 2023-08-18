@@ -1,14 +1,20 @@
 #!/usr/bin/bash
 
-if [ -f "$HOME/keysnet" ]; then
-	source "$HOME/keysnet"
+RC='\e[0m'
+# RV='\u001b[7m'
+RED='\e[31m'
+# YELLOW='\e[33m'
+GREEN='\e[32m'
+GREEN2='[32;1m'
+WHITE='[37;1m'
+BLUE='[34;1m'
+
+if [ -f "$KEYSDIR/keysnet" ]; then
+	command source "$KEYSDIR/keysnet"
 else
 	echo "keys file not found"
 	exit 1
 fi
-
-renderer_n=networkd
-renderer_N=NetworkManager
 
 if [ "$HOSTNAME" = vaio ]; then
 	radio_adapter=wlp7s0
@@ -20,26 +26,68 @@ elif [ "$HOSTNAME" = pcRU ]; then
 	ip=27
 fi
 
+renderer_n=networkd
+renderer_N=NetworkManager
+
 interface=("wifis" "ethernets")
 adapter=("$radio_adapter" "$lan_adapter")
 
-point=("$wan_point1" "$wan_point2" "$wan_point3")
-pass=("$wan_pass_point1" "$wan_pass_point2" "$wan_pass_point3")
-var_routes=("1" "0")
 dhcp4_ref=("true" "no")
+var_routes=("1" "0")
+
+INTERFACE="${interface[0]}"
+ADAPTER="${adapter[0]}"
+POINT=$wan_point3
+PASS_POINT=$wan_pass_point3
+DHCP4_REF="${dhcp4_ref[0]}"
+VAR_ROUTES="${var_routes[0]}"
+
+for i in "$@"; do
+	case $i in
+	--point=*)
+		POINT="${i:8}"
+		;;
+	--pass=*)
+		PASS_POINT="${i:7}"
+		;;
+	esac
+done
+
+# for i in "$@"; do
+# 	case $i in
+# 	--point=*)
+# 		POINT=\$wan_point${i:8}
+# 		PASS_POINT=\$wan_pass_point${i:8}
+# 		;;
+# 	esac
+# done
+#
+# f_point() {
+# 	eval echo "$POINT"
+# }
+# f_pass_point() {
+# 	eval echo "$PASS_POINT"
+# }
+# f_point
+# f_pass_point
+
+dhcp4_addresses=[192.168."${VAR_ROUTES}".$ip/24]
+routes_via=192.168."${VAR_ROUTES}".1
+# nameserv_addr_def=[8.8.8.8,8.8.4.4]
+nameserv_addr=[192.168."${VAR_ROUTES}".1,8.8.8.8]
 
 echo_f() {
 	echo "network:                               "
 	echo "  version: 2                           "
 	echo "  renderer: $renderer_N                "
-	echo "  $interface:                             "
-	echo "    $adapter:                          "
+	echo "  $INTERFACE:                             "
+	echo "    $ADAPTER:                          "
 }
 wifi_dhcp() {
 	echo "      access-points:                   "
-	echo "        $point:                       "
-	echo "          password: $pass          "
-	echo "      dhcp4: $dhcp4_ref                "
+	echo "        $POINT:                       "
+	echo "          password: $PASS_POINT          "
+	echo "      dhcp4: $DHCP4_REF                "
 }
 dhcp4_stat() {
 	echo "      addresses: $dhcp4_addresses      "
@@ -50,29 +98,9 @@ dhcp4_stat() {
 	echo "        addresses: $nameserv_addr      "
 }
 
-# net_dir=/etc/netplan
-net_dir=$(pwd)
-# net_file=$net_dir/01-"$wan_pt"-dhcp4-"$dhcp4_ref".yaml
-net_file="$net_dir"/01-config.yaml
-# net_file="$net_dir"/01-config.yaml
-
-# rm -rf "$net_dir"/01-*.yaml
-
-if [ ! -f "$net_file" ]; then
-	touch "$net_file"
-	# chmod 600 "$net_file"
-fi
-
 # if [ $interface = 1 ]; then
 # 	if [ $dhcp4 = 1 ]; then
 up_wi-fi_dhcp_true() {
-	interface="${interface[0]}"
-	adapter="${adapter[0]}"
-	point="${point[1]}"
-	pass="${pass[1]}"
-	var_routes="${var_routes[0]}"
-	dhcp4_ref="${dhcp4_ref[0]}"
-
 	echo_f
 	wifi_dhcp
 }
@@ -90,19 +118,18 @@ up_lan() {
 }
 # fi
 
-dhcp4_addresses=[192.168."${var_routes[$1]}".$ip/24]
-routes_via=192.168."${var_routes[$1]}".1
-# nameserv_addr_def=[8.8.8.8,8.8.4.4]
-nameserv_addr=[192.168."${var_routes[$1]}".1,8.8.8.8]
+# net_dir=/etc/netplan
+net_dir=$(pwd)
+# net_file="$net_dir/01-$POINT-dhcp4-$DHCP4_REF.yaml"
+net_file="$net_dir"/01-config.yaml
+# net_file="$net_dir"/01-config.yaml
 
-RC='\e[0m'
-# RV='\u001b[7m'
-RED='\e[31m'
-# YELLOW='\e[33m'
-GREEN='\e[32m'
-GREEN2='[32;1m'
-WHITE='[37;1m'
-BLUE='[34;1m'
+# rm -rf "$net_dir"/01-*.yaml
+
+if [ ! -f "$net_file" ]; then
+	touch "$net_file"
+	# chmod 600 "$net_file"
+fi
 
 # Menu TUI
 echo -e "\u001b${GREEN} Setting up Dotfiles...${RC}"
@@ -147,20 +174,20 @@ esac
 
 # netplan apply
 
-function whatsmyip() {
-	# Internal IP Lookup
-	echo -n "Internal IP: "
-	# ifconfig enp2s0 \
-	ifconfig "$radio_adapter" |
-		# grep "inet" | awk -F: '{print $2}' | awk '{print $1}'
-		grep "inet " | awk -F: '{print $1}' | awk '{print $2}'
-	# External IP Lookup
-	echo -n "External IP: "
-	# wget http://smart-ip.net/myip -O - -q
-	dig @resolver4.opendns.com myip.opendns.com +short
-}
-# sleep 1
-
-whatsmyip
+# function whatsmyip() {
+# 	# Internal IP Lookup
+# 	echo -n "Internal IP: "
+# 	# ifconfig enp2s0 \
+# 	ifconfig "$radio_adapter" |
+# 		# grep "inet" | awk -F: '{print $2}' | awk '{print $1}'
+# 		grep "inet " | awk -F: '{print $1}' | awk '{print $2}'
+# 	# External IP Lookup
+# 	echo -n "External IP: "
+# 	# wget http://smart-ip.net/myip -O - -q
+# 	dig @resolver4.opendns.com myip.opendns.com +short
+# }
+# # sleep 1
+#
+# whatsmyip
 
 #run this script with sudo -E -s ./renet.sh

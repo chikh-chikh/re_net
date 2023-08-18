@@ -1,0 +1,15 @@
+#!/bin/bash
+KEY=id_rsa
+PORT=10022 #default port...
+for i in "$@"; do
+	case $i in
+	--port=*)
+		PORT="${i:7}"
+		;;
+	--key=*) KEY="${i:6}" ;;
+	esac
+done
+GIT_SSH_COMMAND="ssh -i $HOME/.ssh/${KEY} -p ${PORT}"
+echo Command: "$GIT_SSH_COMMAND"
+# if root without -E -s flags
+# ssh -o UserKnownHostsFile=/path/to/other/known_hosts -v localhost

@@ -1,0 +1,4 @@
+#!/bin/sh
+# iptables -A INPUT --policy DROP
+iptables -A INPUT -p tcp --dport 9027 -j ACCEPT
+iptables -P INPUT DROP
