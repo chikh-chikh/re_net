@@ -26,21 +26,20 @@ elif [ "$HOSTNAME" = pcRU ]; then
 	ip=27
 fi
 
-renderer_n=networkd
-renderer_N=NetworkManager
-
+renderer=("NetworkManager" "networkd")
 interface=("wifis" "ethernets")
 adapter=("$radio_adapter" "$lan_adapter")
-
 dhcp4_ref=("true" "no")
 var_routes=("1" "0")
 
+RENDERER="${renderer[0]}"
 INTERFACE="${interface[0]}"
 ADAPTER="${adapter[0]}"
+DHCP4="${dhcp4_ref[0]}"
+VAR_ROUTES="${var_routes[0]}"
+
 POINT=$wan_point3
 PASS_POINT=$wan_pass_point3
-DHCP4_REF="${dhcp4_ref[0]}"
-VAR_ROUTES="${var_routes[0]}"
 
 # for i in "$@"; do
 # 	case $i in
@@ -59,8 +58,23 @@ for i in "$@"; do
 		eval POINT=\$wan_point"${i:8}"
 		eval PASS_POINT=\$wan_pass_point"${i:8}"
 		;;
+	--dhcp=no)
+		DHCP4="${dhcp4_ref[1]}"
+		;;
+	--int=wi*)
+		INTERFACE="${interface[0]}"
+		;;
+	--int=eth*)
+		INTERFACE="${interface[1]}"
+		;;
 	esac
 done
+
+if [ "$INTERFACE" = "wifis" ]; then
+	ADAPTER=$radio_adapter
+elif [ "$INTERFACE" = "ethernets" ]; then
+	ADAPTER=$lan_adapter
+fi
 
 if [ "$POINT" = "$wan_point1" ]; then
 	VAR_ROUTES=1
@@ -68,11 +82,11 @@ elif [ "$POINT" = "$wan_point2" ]; then
 	VAR_ROUTES=0
 fi
 
-if [ "$DHCP4_REF" = "true" ]; then
-	DHCP4_REF=true
-else
-	DHCP4_REF=no
-fi
+# if [ "$DHCP4" = "true" ]; then
+# 	DHCP4=true
+# else
+# 	DHCP4=no
+# fi
 
 dhcp4_addresses=[192.168."${VAR_ROUTES}".$ip/24]
 routes_via=192.168."${VAR_ROUTES}".1
@@ -82,15 +96,15 @@ nameserv_addr=[192.168."${VAR_ROUTES}".1,8.8.8.8]
 echo_f() {
 	echo "network:                               "
 	echo "  version: 2                           "
-	echo "  renderer: $renderer_N                "
-	echo "  $INTERFACE:                             "
+	echo "  renderer: $RENDERER                  "
+	echo "  $INTERFACE:                          "
 	echo "    $ADAPTER:                          "
 }
 wifi_dhcp() {
 	echo "      access-points:                   "
-	echo "        $POINT:                       "
-	echo "          password: $PASS_POINT          "
-	echo "      dhcp4: $DHCP4_REF                "
+	echo "        $POINT:                        "
+	echo "          password: $PASS_POINT        "
+	echo "      dhcp4: $DHCP4                    "
 }
 dhcp4_stat() {
 	echo "      addresses: $dhcp4_addresses      "
@@ -102,12 +116,12 @@ dhcp4_stat() {
 }
 
 if [ "$INTERFACE" = wifis ]; then
-	if [ $DHCP4_REF = true ]; then
+	if [ "$DHCP4" = true ]; then
 		up() {
 			echo_f
 			wifi_dhcp
 		}
-	elif [ "$DHCP4_REF" = no ]; then
+	elif [ "$DHCP4" = no ]; then
 		up() {
 			echo_f
 			wifi_dhcp
@@ -124,7 +138,7 @@ fi
 
 # net_dir=/etc/netplan
 net_dir=$(pwd)
-# net_file="$net_dir/01-$POINT-dhcp4-$DHCP4_REF.yaml"
+# net_file="$net_dir/01-$POINT-dhcp4-$DHCP4.yaml"
 net_file="$net_dir"/01-config.yaml
 # rm -rf "$net_dir"/01-*.yaml
 # if [ ! -f "$net_file" ]; then
