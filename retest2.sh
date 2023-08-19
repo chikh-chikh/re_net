@@ -24,6 +24,9 @@ elif [ "$HOSTNAME" = pcRU ]; then
 	radio_adapter=wlx60e32716669c
 	lan_adapter=enp2s0
 	ip=27
+else
+	radio_adapter=$(ip a s | awk '/^[^ ]/ {print $2}' | sed 's/://' | grep 'wl')
+	lan_adapter=$(ip a s | awk '/^[^ ]/ {print $2}' | sed 's/://' | grep 'enp\|eth')
 fi
 
 renderer=("NetworkManager" "networkd")
@@ -150,8 +153,8 @@ net_file="$net_dir"/01-config.yaml
 echo -e "\u001b${GREEN} Setting up netplan...${RC}"
 echo -e "$(up)"
 echo -e "  \u001b${BLUE} (y) confirm ${RC}"
-echo -e "  \u001b${BLUE} (n) nonconfirm ${RC}"
-echo -e "  \u001b${RED} (*) Anything else to exit ${RC}"
+echo -e "  \u001b${BLUE} (a) any points ${RC}"
+echo -e "  \u001b${RED} (x) Anything else to exit ${RC}"
 
 echo -en "\u001b${GREEN2} ==> ${RC}"
 
@@ -162,15 +165,19 @@ case $option in
 "y")
 	up >"$net_file"
 	;;
-"n")
-	cat -e "$KEYSDIR/keysnet"
-
+"a")
+	# cat -e "$KEYSDIR/keysnet"
 	echo -e "\u001b${GREEN} Setting up point...${RC}"
-	echo -e "  \u001b${BLUE} (1)  ${RC}"
-	echo -e "  \u001b${BLUE} (2)  ${RC}"
-	echo -e "  \u001b${BLUE} (3)  ${RC}"
+
+	count=0
+	for p in $wan_point{1,2,3}; do
+		POINT="$p"
+		count="$(("$count" + 1))"
+		echo -e "  \u001b${BLUE} Press $count for $POINT connecting ${RC} "
+	done
+
 	# echo -e "  \u001b${BLUE} (n) nonconfirm ${RC}"
-	echo -e "  \u001b${RED} (*) Anything else to exit ${RC}"
+	echo -e "  \u001b${RED} (x) Anything else to exit ${RC}"
 	read -r op
 
 	# for op in "$@"; do
@@ -181,14 +188,11 @@ case $option in
 	# "2")
 	# 	./retest2.sh --point=2
 	# 	;;
-	# "3")
-	# 	./retest2.sh --point=3
-	# 	;;
 	esac
 	# done
 	;;
-*)
-	echo -e "\u001b[31;1m Invalid option entered, Bye! ${RC}"
+x)
+	echo -e "\u001b${GREEN} Invalid option entered, Bye! ${RC}"
 	exit 0
 	;;
 esac
