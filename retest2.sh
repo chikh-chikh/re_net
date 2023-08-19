@@ -139,6 +139,7 @@ echo -e "  \u001b${BLUE} (y) confirm ${RC}"
 echo -e "  \u001b${BLUE} (n) nonconfirm ${RC}"
 echo -e "  \u001b${RED} (*) Anything else to exit ${RC}"
 
+cat -e "$KEYSDIR/keysnet"
 echo -en "\u001b${GREEN2} ==> ${RC}"
 
 read -r option
@@ -149,7 +150,7 @@ case $option in
 	up >"$net_file"
 	;;
 "n")
-	./retest.sh --point=1
+	./retest2.sh --point="$1"
 	;;
 *)
 	echo -e "\u001b[31;1m Invalid option entered, Bye! ${RC}"
