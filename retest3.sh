@@ -35,14 +35,19 @@ adapter=("$radio_adapter" "$lan_adapter")
 dhcp4_ref=("true" "no")
 var_routes=("1" "0")
 
+##########################
+### Don't move this    ###
+##########################
 RENDERER="${renderer[0]}"
 INTERFACE="${interface[0]}"
 ADAPTER="${adapter[0]}"
 DHCP4="${dhcp4_ref[0]}"
 VAR_ROUTES="${var_routes[0]}"
-
-POINT=$wan_point3
-PASS_POINT=$wan_pass_point3
+POINT=$wan_point2
+PASS_POINT=$wan_pass_point2
+##########################
+#####   41 -47 !!!  ######
+##########################
 
 # for i in "$@"; do
 # 	case $i in
@@ -62,7 +67,7 @@ for i in "$@"; do
 		eval PASS_POINT=\$wan_pass_point"${i:8}"
 		;;
 	--dhcp=no)
-		DHCP4="${dhcp4_ref[1]}"
+		DHCP4="${dhcp4_ref[0]}"
 		;;
 	--int=wi*)
 		INTERFACE="${interface[0]}"
@@ -146,8 +151,11 @@ net_file="$net_dir"/01-config.yaml
 # rm -rf "$net_dir"/01-*.yaml
 # if [ ! -f "$net_file" ]; then
 # 	touch "$net_file"
-# 	# chmod 600 "$net_file"
+# 	chmod 660 "$net_file"
 # fi
+
+this_dir_path="$(dirname "$(realpath "$0")")"
+this_config="$this_dir_path/retest3.sh"
 
 # Menu TUI
 echo -e "\u001b${GREEN} Setting up netplan...${RC}"
@@ -162,13 +170,15 @@ echo -en "\u001b${GREEN2} ==> ${RC}"
 
 read -r option
 
-# config=./retest2.sh
-
 case $option in
+
 "y")
 	up >"$net_file"
-	;;
+	netplan apply
+	sleep 1
 
+	whatsmyip
+	;;
 "a")
 	# cat -e "$KEYSDIR/keysnet"
 	echo -e "\u001b${GREEN} Setting up point...${RC}"
@@ -181,13 +191,13 @@ case $option in
 	done
 
 	echo -e "  \u001b${RED} (x) Anything else to exit ${RC}"
-
 	read -r op
 	# for op in "$@"; do
 	case $op in
 	"$op")
-		config="$config + --point=$op"
-		$config
+		sed -i "46 s/POINT=\$wan_point./POINT=\$wan_point$op/g" "$this_config"
+		sed -i "47 s/PASS_POINT=\$wan_pass_point./PASS_POINT=\$wan_pass_point$op/g" "$this_config"
+		"$this_config"
 		;;
 	esac
 	# done
@@ -195,30 +205,22 @@ case $option in
 
 "d")
 	echo -e "\u001b${GREEN} Setting up dhcp4...${RC}"
-
 	if [ "$DHCP4" = "true" ]; then
-		DHCP4=no
-	elif
-		[ "$DHCP4" = "no" ]
-	then
-		DHCP4=yes
+		sed -i '44 s/DHCP4=\"\${dhcp4_ref\[0\]\}\"/DHCP4="${dhcp4_ref[1]}"/g' "$this_config"
+	elif [ "$DHCP4" = "no" ]; then
+		sed -i '44 s/DHCP4=\"\${dhcp4_ref\[1\]\}\"/DHCP4="${dhcp4_ref[0]}"/g' "$this_config"
 	fi
-
-	config=./retest2.sh
-	config="$config + --dhcp=$DHCP4"
-	$config
+	"$this_config"
 	;;
 
 "i")
 	echo -e "\u001b${GREEN} Setting up interface...${RC}"
-
 	if [ "$INTERFACE" = "wifis" ]; then
-		INTERFACE=ethernets
+		sed -i '42 s/INTERFACE=\"\${interface\[0\]\}\"/INTERFACE="${interface[1]}"/g' "$this_config"
 	elif [ "$INTERFACE" = "ethernets" ]; then
-		INTERFACE=wifis
+		sed -i '44 s/INTERFACE=\"\${interface\[1\]\}\"/INTERFACE="${interface[0]}"/g' "$this_config"
 	fi
-
-	$config + --int="$INTERFACE"
+	"$this_config"
 	;;
 
 x)
@@ -229,24 +231,22 @@ esac
 
 # exit 0
 
-# up >"$net_file"
-
 # netplan apply
 
-# function whatsmyip() {
-# 	# Internal IP Lookup
-# 	echo -n "Internal IP: "
-# 	# ifconfig enp2s0 \
-# 	ifconfig "$radio_adapter" |
-# 		# grep "inet" | awk -F: '{print $2}' | awk '{print $1}'
-# 		grep "inet " | awk -F: '{print $1}' | awk '{print $2}'
-# 	# External IP Lookup
-# 	echo -n "External IP: "
-# 	# wget http://smart-ip.net/myip -O - -q
-# 	dig @resolver4.opendns.com myip.opendns.com +short
-# }
-# # sleep 1
+function whatsmyip() {
+	# Internal IP Lookup
+	echo -n "Internal IP: "
+	# ifconfig enp2s0 \
+	ifconfig "$radio_adapter" |
+		# grep "inet" | awk -F: '{print $2}' | awk '{print $1}'
+		grep "inet " | awk -F: '{print $1}' | awk '{print $2}'
+	# External IP Lookup
+	echo -n "External IP: "
+	# wget http://smart-ip.net/myip -O - -q
+	dig @resolver4.opendns.com myip.opendns.com +short
+}
+# sleep 1
 #
 # whatsmyip
 
-#run this script with sudo -E -s ./renet.sh
+#run this script with sudo -E -s ./netplan.sh.sh
