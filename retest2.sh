@@ -169,21 +169,23 @@ case $option in
 	echo -e "  \u001b${BLUE} (1)  ${RC}"
 	echo -e "  \u001b${BLUE} (2)  ${RC}"
 	echo -e "  \u001b${BLUE} (3)  ${RC}"
-	echo -e "  \u001b${BLUE} (n) nonconfirm ${RC}"
+	# echo -e "  \u001b${BLUE} (n) nonconfirm ${RC}"
 	echo -e "  \u001b${RED} (*) Anything else to exit ${RC}"
 	read -r op
-	case $op in
-	"1")
-		./retest2.sh --point=1
-		;;
-	"2")
-		./retest2.sh --point=2
-		;;
-	"3")
-		./retest2.sh --point=3
-		;;
 
+	# for op in "$@"; do
+	case $op in
+	"$op")
+		./retest2.sh --point="$op"
+		;;
+	# "2")
+	# 	./retest2.sh --point=2
+	# 	;;
+	# "3")
+	# 	./retest2.sh --point=3
+	# 	;;
 	esac
+	# done
 	;;
 *)
 	echo -e "\u001b[31;1m Invalid option entered, Bye! ${RC}"
