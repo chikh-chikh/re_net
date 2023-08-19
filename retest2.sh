@@ -155,6 +155,7 @@ echo -e "$(up)"
 echo -e "  \u001b${BLUE} (y) confirm ${RC}"
 echo -e "  \u001b${BLUE} (a) any points ${RC}"
 echo -e "  \u001b${BLUE} (d) change dhcp ${RC}"
+echo -e "  \u001b${BLUE} (i) change interface ${RC}"
 echo -e "  \u001b${RED} (x) Anything else to exit ${RC}"
 
 echo -en "\u001b${GREEN2} ==> ${RC}"
@@ -192,6 +193,7 @@ case $option in
 	esac
 	# done
 	;;
+
 "d")
 	echo -e "\u001b${GREEN} Setting up dhcp4...${RC}"
 
@@ -205,6 +207,19 @@ case $option in
 
 	./retest2.sh --dhcp="$DHCP4"
 	;;
+
+"i")
+	echo -e "\u001b${GREEN} Setting up interface...${RC}"
+
+	if [ "$INTERFACE" = "wifis" ]; then
+		INTERFACE=ethernets
+	elif [ "$INTERFACE" = "ethernets" ]; then
+		INTERFACE=wifis
+	fi
+
+	./retest2.sh --int="$INTERFACE"
+	;;
+
 x)
 	echo -e "\u001b${GREEN} Invalid option entered, Bye! ${RC}"
 	exit 0
