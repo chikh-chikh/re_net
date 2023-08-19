@@ -139,15 +139,18 @@ elif [ "$INTERFACE" = ethernets ]; then
 fi
 # up >"$net_file"
 
-# net_dir=/etc/netplan
-net_dir=$(pwd)
+net_dir=/etc/netplan
+# net_dir=$(pwd)
 # net_file="$net_dir/01-$POINT-dhcp4-$DHCP4.yaml"
 net_file="$net_dir"/01-config.yaml
 # rm -rf "$net_dir"/01-*.yaml
 # if [ ! -f "$net_file" ]; then
 # 	touch "$net_file"
-# 	# chmod 600 "$net_file"
+# 	chmod 660 "$net_file"
 # fi
+
+this_dir_path="$(dirname "$(realpath "$0")")"
+this_config="$this_dir_path/netplan.sh"
 
 # Menu TUI
 echo -e "\u001b${GREEN} Setting up netplan...${RC}"
@@ -166,6 +169,10 @@ case $option in
 
 "y")
 	up >"$net_file"
+	netplan apply
+	sleep 1
+
+	whatsmyip
 	;;
 "a")
 	# cat -e "$KEYSDIR/keysnet"
@@ -185,10 +192,10 @@ case $option in
 	# for op in "$@"; do
 	case $op in
 	"$op")
-		./retest2.sh --point="$op"
+		"$this_config" --point="$op"
 		;;
 	# "2")
-	# 	./retest2.sh --point=2
+	# 	THIS_CONFIG --point=2
 	# 	;;
 	esac
 	# done
@@ -205,7 +212,7 @@ case $option in
 		DHCP4=yes
 	fi
 
-	./retest2.sh --dhcp="$DHCP4"
+	"$this_config" --dhcp="$DHCP4"
 	;;
 
 "i")
@@ -217,7 +224,7 @@ case $option in
 		INTERFACE=wifis
 	fi
 
-	./retest2.sh --int="$INTERFACE"
+	"$this_config" --int="$INTERFACE"
 	;;
 
 x)
@@ -228,24 +235,22 @@ esac
 
 # exit 0
 
-# up >"$net_file"
-
 # netplan apply
 
-# function whatsmyip() {
-# 	# Internal IP Lookup
-# 	echo -n "Internal IP: "
-# 	# ifconfig enp2s0 \
-# 	ifconfig "$radio_adapter" |
-# 		# grep "inet" | awk -F: '{print $2}' | awk '{print $1}'
-# 		grep "inet " | awk -F: '{print $1}' | awk '{print $2}'
-# 	# External IP Lookup
-# 	echo -n "External IP: "
-# 	# wget http://smart-ip.net/myip -O - -q
-# 	dig @resolver4.opendns.com myip.opendns.com +short
-# }
-# # sleep 1
+function whatsmyip() {
+	# Internal IP Lookup
+	echo -n "Internal IP: "
+	# ifconfig enp2s0 \
+	ifconfig "$radio_adapter" |
+		# grep "inet" | awk -F: '{print $2}' | awk '{print $1}'
+		grep "inet " | awk -F: '{print $1}' | awk '{print $2}'
+	# External IP Lookup
+	echo -n "External IP: "
+	# wget http://smart-ip.net/myip -O - -q
+	dig @resolver4.opendns.com myip.opendns.com +short
+}
+# sleep 1
 #
 # whatsmyip
 
-#run this script with sudo -E -s ./renet.sh
+#run this script with sudo -E -s ./netplan.sh.sh
