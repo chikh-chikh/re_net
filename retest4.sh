@@ -210,8 +210,8 @@ case $option in
 		case $pnt in
 		*[0-9]*)
 			point=${num_point[(($pnt - 1))]}
-			echo -e "point is $POINT"
-			echo -n " Please enter the password for $POINT: "
+			echo -e "point is $point"
+			echo -n " Please enter the password for $point: "
 			read -r point_pass
 			"$this_config" --scanned "$point" "$point_pass"
 			;;
