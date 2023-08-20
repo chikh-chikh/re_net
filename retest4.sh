@@ -25,8 +25,13 @@ elif [ "$HOSTNAME" = pcRU ]; then
 	lan_adapter=enp2s0
 	ip=27
 else
-	radio_adapter=$(ip a s | awk '/^[^ ]/ {print $2}' | sed 's/://' | grep 'wl')
-	lan_adapter=$(ip a s | awk '/^[^ ]/ {print $2}' | sed 's/://' | grep 'enp\|eth')
+	for w in $(command ls /sys/class/net); do
+		if [ -d /sys/slass/net/"$w"/wireless ]; then
+			radio_adapter=$w
+		fi
+	done
+
+	lan_adapter=$(command ls /sys/class/net | grep 'enp\|eth')
 fi
 
 renderer=("NetworkManager" "networkd")
