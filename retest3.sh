@@ -43,8 +43,8 @@ INTERFACE="${interface[0]}"
 ADAPTER="${adapter[0]}"
 DHCP4="${dhcp4_ref[0]}"
 VAR_ROUTES="${var_routes[0]}"
-POINT=$wan_point2
-PASS_POINT=$wan_pass_point2
+POINT=$wan_point3
+PASS_POINT=$wan_pass_point3
 ##########################
 #####   41 -47 !!!  ######
 ##########################
@@ -192,6 +192,8 @@ case $option in
 
 	echo -e "  \u001b${RED} (x) Anything else to exit ${RC}"
 	read -r op
+
+	# if [ "$op" = "${1,2,3}" ]; then
 	# for op in "$@"; do
 	case $op in
 	"$op")
@@ -201,6 +203,7 @@ case $option in
 		;;
 	esac
 	# done
+	# fi
 	;;
 
 "d")
