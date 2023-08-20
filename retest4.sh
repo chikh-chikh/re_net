@@ -25,13 +25,31 @@ elif [ "$HOSTNAME" = pcRU ]; then
 	lan_adapter=enp2s0
 	ip=27
 else
-	for w in $(command ls /sys/class/net); do
-		if [ -d /sys/slass/net/"$w"/wireless ]; then
+	for w in $(command ls /sys/class/net | egrep -v "^lo$"); do
+		if [ -d /sys/class/net/"$w"/wireless ]; then
 			radio_adapter=$w
+		fi
+
+		#включен ли интерфейс "up/down" и подключен ли какой-либо физический кабель к порту "0/1"
+		if [ -f /sys/class/net/"$w"/carrier ] && [ -f /sys/class/net/"$w"/operstate ]; then
+			if grep "1" /sys/class/net/"$w"/carrier && grep "down" /sys/class/net/"$w"/operstate; then
+				echo "use $w, is free"
+				lan_adapter=$w
+			elif ! grep "up" /sys/class/net/"$w"/operstate; then
+				echo "$w is busy"
+			elif ! grep "1" /sys/class/net/"$w"/carrier; then
+				echo "please, connect cabel to $w interface"
+			fi
+
+			# if grep "down" /sys/class/net/"$w"/operstate; then
+			# 	echo "$w is free "
+			# else
+			# 	echo "the $w is busy"
+			# fi
+
 		fi
 	done
 
-	lan_adapter=$(command ls /sys/class/net | grep 'enp\|eth')
 fi
 
 renderer=("NetworkManager" "networkd")
