@@ -59,20 +59,13 @@ PASS_POINT=$wan_pass_point3
 #####   51 -57 !!!  ######
 ##########################
 
-# for i in "$@"; do
-# 	case $i in
-# 	--point=*) #wan_point{1,2,3}
-# 		POINT="${i:8}"
-# 		;;
-# 	--pass=*) #wan_pass_point{1,2,3}
-# 		PASS_POINT="${i:7}"
-# 		;;
-# 	esac
-# done
-
 for i in "$@"; do
 	case $i in
-	--point=*) #1,2,3
+	--scanned)
+		POINT=$2
+		PASS_POINT=$3
+		;;
+	--point=[0-9]) #1,2,3
 		eval POINT=\$wan_point"${i:8}"
 		eval PASS_POINT=\$wan_pass_point"${i:8}"
 		;;
@@ -216,8 +209,11 @@ case $option in
 
 		case $pnt in
 		*[0-9]*)
-			echo -e "point is ${num_point[(($pnt - 1))]}"
-
+			point=${num_point[(($pnt - 1))]}
+			echo -e "point is $POINT"
+			echo -n " Please enter the password for $POINT: "
+			read -r point_pass
+			"$this_config" --scanned "$point" "$point_pass"
 			;;
 		esac
 
