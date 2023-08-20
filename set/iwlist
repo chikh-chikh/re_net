@@ -1,0 +1,65 @@
+#!/bin/bash
+
+if [ "$HOSTNAME" = vaio ]; then
+	radio_adapter=wlp7s0
+	# lan_adapter=enp2s0
+	# ip=9
+elif [ "$HOSTNAME" = pcRU ]; then
+	radio_adapter=wlx60e32716669c
+	lan_adapter=enp2s0
+	# ip=27
+else
+	radio_adapter=$(ip a s | awk '/^[^ ]/ {print $2}' | sed 's/://' | grep 'wl')
+	lan_adapter=$(ip a s | awk '/^[^ ]/ {print $2}' | sed 's/://' | grep 'enp\|eth')
+fi
+
+sudo iwlist "$radio_adapter" scan | egrep -i 'ssid|quality'
+
+sudo iwlist "$radio_adapter" scanning | egrep 'Cell |Encryption|Quality|Last beacon|ESSID'
+
+nmcli dev wifi
+
+#если вы ищете точки доступа, возможно, у вас еще нет подключения к Интернету и вы
+#не можете подключиться для установки указанного программного обеспечения.
+# for i in $(ls /sys/class/net/ | egrep -v "^lo$"); do
+#   sudo iw dev $i scan | grep SSID | awk '{print substr($0, index($0,$2)) }';
+# done 2>/dev/null | sort -u
+######
+# Разрушая его:
+#
+# for i in $(ls /sys/class/net/ | egrep -v ^lo$);
+# Давайте посмотрим на все содержимое location /sys/class/net. Здесь будут перечислены все сетевые устройства, но на самом деле нас не интересует интерфейс обратной связи. так что мы проигнорируем это
+#
+# do sudo iw dev $i scan | grep SSID | awk '{print substr($0, index($0,$2)) }';done
+# Для каждого из сетевых интерфейсов, которые мы нашли выше, давайте проведем сканирование, чтобы перечислить все SSID (и только SSID).
+#
+# 2>/dev/null
+# И игнорируйте все ошибки (например, поиск SSID с интерфейсами ethernet).
+#
+# | sort -u
+# И, наконец, если у вас в системе несколько адаптеров Wi-Fi, перечислите каждый SSID только один раз.
+
+#сортирует точки доступа по уровню сигнала
+# sudo iw dev "$radio_adapter" scan | egrep "signal:|SSID:" | sed -e "s/\tsignal: //" -e "s/\tSSID: //" | awk '{ORS = (NR % 2 == 0)? "\n" : " "; print}' | sort
+# #########
+# iw dev wlan0 scan: Поиск точек доступа, доступных через интерфейс wlan0
+#
+# egrep "signal:|SSID:": Получить линии с уровнем сигнала и идентификаторами SSID из iwэто выход. Теперь результат выглядит следующим образом:
+#
+#         signal: -77.00 dBm         SSID: nameOfAccessPoint1        signal: -71.00 dBm        SSID: nameOfAccessPoint2
+# sed -e "s/\tsignal: //" -e "s/\tSSID: //": Уменьшить egrepвывод на этот:
+#
+# -77,00 дБм nameOfAccessPoint1-71,00 дБм nameofaccesspoint2
+# awk '{ORS = (NR % 2 == 0)? "\n" : " "; print}': Выведите уровень сигнала и SSID на одну линию. Более конкретно, когда номер строки (NR) является четным, т.е. мы находимся на строке, показывающей точку доступа, разделитель выходных записей (ORS) должен быть разрыв строки. В противном случае мы находимся на линии, содержащей уровень сигнала, поэтому мы присоединяемся к линии, делая ORS простое пространство.
+#
+# Если мы sort на этом выходе мы получаем список уровней сигнала и точек доступа, показывающий точку доступа с самым сильным сигналом сверху:
+# -71.00 dBm nameOfAccessPoint2-77.00 dBm nameOfAccessPoint1
+# Внимание: Некоторые точки доступа могут иметь расширенные возможности: Расширенные возможности: * Список SSID
+#
+# Итак, grepping "SSID:" вместо "SSID" помогает избежать этого дополнительного вывода, который в противном случае привел бы к сбою команды.
+
+#логические имена сетевых адаптеров
+# sudo lshw -C network | grep 'network\|description\|logical name'
+
+# sudo apt-get install wavemon
+# sudo apt-get install iw

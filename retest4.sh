@@ -1,4 +1,13 @@
 #!/usr/bin/bash
+###run this script with sudo -E -s ./retest4.sh
+
+# net_dir=/etc/netplan
+net_dir=$(pwd)
+# net_file="$net_dir/01-$POINT-dhcp4-$DHCP4.yaml"
+net_file="$net_dir"/01-config.yaml
+
+this_dir_path="$(dirname "$(realpath "$0")")"
+this_config="$this_dir_path/retest4.sh"
 
 RC='\e[0m'
 # RV='\u001b[7m'
@@ -25,31 +34,9 @@ elif [ "$HOSTNAME" = pcRU ]; then
 	lan_adapter=enp2s0
 	ip=27
 else
-	for w in $(command ls /sys/class/net | egrep -v "^lo$"); do
-		if [ -d /sys/class/net/"$w"/wireless ]; then
-			radio_adapter=$w
-		fi
-
-		#включен ли интерфейс "up/down" и подключен ли какой-либо физический кабель к порту "0/1"
-		if [ -f /sys/class/net/"$w"/carrier ] && [ -f /sys/class/net/"$w"/operstate ]; then
-			if grep "1" /sys/class/net/"$w"/carrier && grep "down" /sys/class/net/"$w"/operstate; then
-				echo "use $w, is free"
-				lan_adapter=$w
-			elif ! grep "up" /sys/class/net/"$w"/operstate; then
-				echo "$w is busy"
-			elif ! grep "1" /sys/class/net/"$w"/carrier; then
-				echo "please, connect cabel to $w interface"
-			fi
-
-			# if grep "down" /sys/class/net/"$w"/operstate; then
-			# 	echo "$w is free "
-			# else
-			# 	echo "the $w is busy"
-			# fi
-
-		fi
-	done
-
+	"$this_dir_path"/check_adapters.sh
+	radio_adapter=$lan_adapter
+	lan_adapter=$radio_adapter
 fi
 
 renderer=("NetworkManager" "networkd")
@@ -66,10 +53,10 @@ INTERFACE="${interface[0]}"
 ADAPTER="${adapter[0]}"
 DHCP4="${dhcp4_ref[0]}"
 VAR_ROUTES="${var_routes[0]}"
-POINT=$wan_point3
-PASS_POINT=$wan_pass_point3
+POINT=$wan_pointx
+PASS_POINT=$wan_pass_pointx
 ##########################
-#####   41 -47 !!!  ######
+#####   51 -57 !!!  ######
 ##########################
 
 # for i in "$@"; do
@@ -165,20 +152,6 @@ elif [ "$INTERFACE" = ethernets ]; then
 		dhcp4_stat
 	}
 fi
-# up >"$net_file"
-
-# net_dir=/etc/netplan
-net_dir=$(pwd)
-# net_file="$net_dir/01-$POINT-dhcp4-$DHCP4.yaml"
-net_file="$net_dir"/01-config.yaml
-# rm -rf "$net_dir"/01-*.yaml
-# if [ ! -f "$net_file" ]; then
-# 	touch "$net_file"
-# 	chmod 660 "$net_file"
-# fi
-
-this_dir_path="$(dirname "$(realpath "$0")")"
-this_config="$this_dir_path/retest3.sh"
 
 # Menu TUI
 echo -e "\u001b${GREEN} Setting up netplan...${RC}"
@@ -196,10 +169,14 @@ read -r option
 case $option in
 
 "y")
+	# rm -rf "$net_dir"/01-*.yaml
+	# if [ ! -f "$net_file" ]; then
+	# 	touch "$net_file"
+	# 	chmod 660 "$net_file"
+	# fi
 	up >"$net_file"
 	netplan apply
 	sleep 1
-
 	whatsmyip
 	;;
 "a")
@@ -220,8 +197,8 @@ case $option in
 	# for op in "$@"; do
 	case $op in
 	"$op")
-		sed -i "46 s/POINT=\$wan_point./POINT=\$wan_point$op/g" "$this_config"
-		sed -i "47 s/PASS_POINT=\$wan_pass_point./PASS_POINT=\$wan_pass_point$op/g" "$this_config"
+		sed -i "56 s/POINT=\$wan_point./POINT=\$wan_point$op/g" "$this_config"
+		sed -i "57 s/PASS_POINT=\$wan_pass_point./PASS_POINT=\$wan_pass_point$op/g" "$this_config"
 		"$this_config"
 		;;
 	esac
@@ -232,9 +209,9 @@ case $option in
 "d")
 	echo -e "\u001b${GREEN} Setting up dhcp4...${RC}"
 	if [ "$DHCP4" = "true" ]; then
-		sed -i '44 s/DHCP4=\"\${dhcp4_ref\[0\]\}\"/DHCP4="${dhcp4_ref[1]}"/g' "$this_config"
+		sed -i '54 s/DHCP4=\"\${dhcp4_ref\[0\]\}\"/DHCP4="${dhcp4_ref[1]}"/g' "$this_config"
 	elif [ "$DHCP4" = "no" ]; then
-		sed -i '44 s/DHCP4=\"\${dhcp4_ref\[1\]\}\"/DHCP4="${dhcp4_ref[0]}"/g' "$this_config"
+		sed -i '54 s/DHCP4=\"\${dhcp4_ref\[1\]\}\"/DHCP4="${dhcp4_ref[0]}"/g' "$this_config"
 	fi
 	"$this_config"
 	;;
@@ -242,9 +219,9 @@ case $option in
 "i")
 	echo -e "\u001b${GREEN} Setting up interface...${RC}"
 	if [ "$INTERFACE" = "wifis" ]; then
-		sed -i '42 s/INTERFACE=\"\${interface\[0\]\}\"/INTERFACE="${interface[1]}"/g' "$this_config"
+		sed -i '52 s/INTERFACE=\"\${interface\[0\]\}\"/INTERFACE="${interface[1]}"/g' "$this_config"
 	elif [ "$INTERFACE" = "ethernets" ]; then
-		sed -i '42 s/INTERFACE=\"\${interface\[1\]\}\"/INTERFACE="${interface[0]}"/g' "$this_config"
+		sed -i '52 s/INTERFACE=\"\${interface\[1\]\}\"/INTERFACE="${interface[0]}"/g' "$this_config"
 	fi
 	"$this_config"
 	;;
@@ -271,8 +248,5 @@ function whatsmyip() {
 	# wget http://smart-ip.net/myip -O - -q
 	dig @resolver4.opendns.com myip.opendns.com +short
 }
-# sleep 1
-#
-# whatsmyip
 
 #run this script with sudo -E -s ./netplan.sh.sh
