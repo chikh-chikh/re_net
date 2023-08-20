@@ -53,8 +53,8 @@ INTERFACE="${interface[0]}"
 ADAPTER="${adapter[0]}"
 DHCP4="${dhcp4_ref[0]}"
 VAR_ROUTES="${var_routes[0]}"
-POINT=$wan_pointx
-PASS_POINT=$wan_pass_pointx
+POINT=$wan_point3
+PASS_POINT=$wan_pass_point3
 ##########################
 #####   51 -57 !!!  ######
 ##########################
@@ -190,20 +190,44 @@ case $option in
 		echo -e "  \u001b${BLUE} Press $count for $POINT connecting ${RC} "
 	done
 
+	echo -e "  \u001b${BLUE} Press s for scan wi-fi points ${RC} "
 	echo -e "  \u001b${RED} (x) Anything else to exit ${RC}"
 	read -r op
 
-	# if [ "$op" = "${1,2,3}" ]; then
-	# for op in "$@"; do
 	case $op in
-	"$op")
+	*[0-9]*)
 		sed -i "56 s/POINT=\$wan_point./POINT=\$wan_point$op/g" "$this_config"
 		sed -i "57 s/PASS_POINT=\$wan_pass_point./PASS_POINT=\$wan_pass_point$op/g" "$this_config"
 		"$this_config"
 		;;
+	"s")
+		echo "scan wi-fi point"
+		count=0
+		num_point=()
+		points=$("$this_dir_path"/bin/wifi_list.sh)
+		for p in $points; do
+			count="$(("$count" + 1))"
+			point="$p"
+			num_point+=("$point")
+			echo -e "  \u001b${BLUE} Press $count for $point connecting ${RC} "
+			# echo -e "${num_point[(("$count" - 1))]}"
+		done
+		read -r pnt
+
+		case $pnt in
+		*[0-9]*)
+			echo -e "point is ${num_point[(($pnt - 1))]}"
+
+			;;
+		esac
+
+		echo -e "  \u001b${RED} (x) Anything else to exit ${RC}"
+		;;
+
+	'' | *[!0-9]*)
+		echo "bad option"
+		;;
 	esac
-	# done
-	# fi
 	;;
 
 "d")
