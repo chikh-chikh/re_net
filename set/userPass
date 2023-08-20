@@ -1,0 +1,6 @@
+#/bin/bash
+# запрашивать пароль пользователя и устанавливать его в /etc/passwd
+echo -n " Please enter the password for the given user: "
+read userPass
+useradd $userAcct && echo -e "$userPass\n$userPass\n" | passwd $userAcct > /dev/null 2>&1 && echo " User account has been created." || echo " ERR -- User account creation failed!"
+
