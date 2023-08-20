@@ -157,6 +157,19 @@ net_file="$net_dir"/01-config.yaml
 this_dir_path="$(dirname "$(realpath "$0")")"
 this_config="$this_dir_path/netplan_gen.sh"
 
+function whatsmyip() {
+	# Internal IP Lookup
+	echo -n "Internal IP: "
+	# ifconfig enp2s0 \
+	ifconfig "$radio_adapter" |
+		# grep "inet" | awk -F: '{print $2}' | awk '{print $1}'
+		grep "inet " | awk -F: '{print $1}' | awk '{print $2}'
+	# External IP Lookup
+	echo -n "External IP: "
+	# wget http://smart-ip.net/myip -O - -q
+	dig @resolver4.opendns.com myip.opendns.com +short
+}
+
 # Menu TUI
 echo -e "\u001b${GREEN} Setting up netplan...${RC}"
 echo -e "$(up)"
@@ -175,7 +188,7 @@ case $option in
 "y")
 	up >"$net_file"
 	netplan apply
-	sleep 1
+	sleep 2
 
 	whatsmyip
 	;;
@@ -236,18 +249,6 @@ esac
 
 # netplan apply
 
-function whatsmyip() {
-	# Internal IP Lookup
-	echo -n "Internal IP: "
-	# ifconfig enp2s0 \
-	ifconfig "$radio_adapter" |
-		# grep "inet" | awk -F: '{print $2}' | awk '{print $1}'
-		grep "inet " | awk -F: '{print $1}' | awk '{print $2}'
-	# External IP Lookup
-	echo -n "External IP: "
-	# wget http://smart-ip.net/myip -O - -q
-	dig @resolver4.opendns.com myip.opendns.com +short
-}
 # sleep 1
 #
 # whatsmyip
