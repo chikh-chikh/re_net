@@ -218,7 +218,7 @@ case $option in
 	if [ "$INTERFACE" = "wifis" ]; then
 		sed -i '42 s/INTERFACE=\"\${interface\[0\]\}\"/INTERFACE="${interface[1]}"/g' "$this_config"
 	elif [ "$INTERFACE" = "ethernets" ]; then
-		sed -i '44 s/INTERFACE=\"\${interface\[1\]\}\"/INTERFACE="${interface[0]}"/g' "$this_config"
+		sed -i '42 s/INTERFACE=\"\${interface\[1\]\}\"/INTERFACE="${interface[0]}"/g' "$this_config"
 	fi
 	"$this_config"
 	;;
