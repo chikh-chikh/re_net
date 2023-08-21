@@ -1,11 +1,9 @@
 #!/usr/bin/bash
 ###run this script with sudo -E -s ./retest4.sh
-
 # net_dir=/etc/netplan
 net_dir=$(pwd)
 # net_file="$net_dir/01-$POINT-dhcp4-$DHCP4.yaml"
 net_file="$net_dir"/01-config.yaml
-
 this_dir_path="$(dirname "$(realpath "$0")")"
 this_config="$this_dir_path/retest4.sh"
 
@@ -18,11 +16,11 @@ GREEN2='[32;1m'
 WHITE='[37;1m'
 BLUE='[34;1m'
 
-if [ -f "$KEYSDIR/keysnet" ]; then
-	command source "$KEYSDIR/keysnet"
+if [ -f "$KEYSDIR/keysnet.sh" ]; then
+	command source "$KEYSDIR/keysnet.sh"
 else
 	echo "keys file not found"
-	exit 1
+	echo ""
 fi
 
 if [ "$HOSTNAME" = vaio ]; then
@@ -35,8 +33,8 @@ elif [ "$HOSTNAME" = pcRU ]; then
 	ip=27
 else
 	"$this_dir_path"/check_adapters.sh
-	radio_adapter=$lan_adapter
-	lan_adapter=$radio_adapter
+	radio_adapter=$radio_adapter
+	lan_adapter=$lan_adapter
 fi
 
 renderer=("NetworkManager" "networkd")
@@ -44,6 +42,8 @@ interface=("wifis" "ethernets")
 adapter=("$radio_adapter" "$lan_adapter")
 dhcp4_ref=("true" "no")
 var_routes=("1" "0")
+point=("${!points[@]}")
+pass_point=("${points[@]}")
 
 ##########################
 ### Don't move this    ###
@@ -53,8 +53,8 @@ INTERFACE="${interface[0]}"
 ADAPTER="${adapter[0]}"
 DHCP4="${dhcp4_ref[0]}"
 VAR_ROUTES="${var_routes[0]}"
-POINT=$wan_point3
-PASS_POINT=$wan_pass_point3
+POINT=${point[2]}
+PASS_POINT=${pass_point[2]}
 ##########################
 #####   51 -57 !!!  ######
 ##########################
@@ -87,17 +87,11 @@ elif [ "$INTERFACE" = "ethernets" ]; then
 	ADAPTER=$lan_adapter
 fi
 
-if [ "$POINT" = "$wan_point1" ]; then
+if [ "$POINT" = "${point[1]}" ]; then
 	VAR_ROUTES=1
-elif [ "$POINT" = "$wan_point2" ]; then
+elif [ "$POINT" = "${point[0]}" ]; then
 	VAR_ROUTES=0
 fi
-
-# if [ "$DHCP4" = "true" ]; then
-# 	DHCP4=true
-# else
-# 	DHCP4=no
-# fi
 
 dhcp4_addresses=[192.168."${VAR_ROUTES}".$ip/24]
 routes_via=192.168."${VAR_ROUTES}".1
@@ -177,7 +171,7 @@ case $option in
 	echo -e "\u001b${GREEN} Setting up point...${RC}"
 
 	count=0
-	for p in $wan_point{1,2,3}; do
+	for p in "${point[@]}"; do
 		POINT="$p"
 		count="$(("$count" + 1))"
 		echo -e "  \u001b${BLUE} Press $count for $POINT connecting ${RC} "
@@ -187,10 +181,14 @@ case $option in
 	echo -e "  \u001b${RED} (x) Anything else to exit ${RC}"
 	read -r op
 
+	POINT=${point[0]}
+	PASS_POINT=${pass_point[0]}
+
 	case $op in
-	*[0-9]*)
-		sed -i "56 s/POINT=\$wan_point./POINT=\$wan_point$op/g" "$this_config"
-		sed -i "57 s/PASS_POINT=\$wan_pass_point./PASS_POINT=\$wan_pass_point$op/g" "$this_config"
+	[0-9])
+		pp="$(("$op" - 1))"
+		sed -i "56 s/POINT=\${point\[.\]\}/POINT=\${point[$pp]}/g" "$this_config"
+		sed -i "57 s/PASS_POINT=\${pass_point\[.\]\}/PASS_POINT=\${pass_point[$pp]}/g" "$this_config"
 		"$this_config"
 		;;
 	"s")
@@ -200,20 +198,18 @@ case $option in
 		points=$("$this_dir_path"/bin/wifi_list.sh)
 		for p in $points; do
 			count="$(("$count" + 1))"
-			point="$p"
-			num_point+=("$point")
-			echo -e "  \u001b${BLUE} Press $count for $point connecting ${RC} "
-			# echo -e "${num_point[(("$count" - 1))]}"
+			num_point+=("$p")
+			echo -e "  \u001b${BLUE} Press $count for $p connecting ${RC} "
 		done
 		read -r pnt
 
 		case $pnt in
 		*[0-9]*)
-			point=${num_point[(($pnt - 1))]}
-			echo -e "point is $point"
-			echo -n " Please enter the password for $point: "
-			read -r point_pass
-			"$this_config" --scanned "$point" "$point_pass"
+			pn=${num_point[(($pnt - 1))]}
+			echo -e "point is $pn"
+			echo -n " Please enter the password for $pn: "
+			read -r pn_pass
+			"$this_config" --scanned "$pn" "$pn_pass"
 			;;
 		esac
 
