@@ -1,0 +1,22 @@
+#!/bin/bash
+
+declare -a arr
+arr=("a")
+arr=("${arr[@]}" "new")
+echo "${arr[@]}"
+new
+arr=("${arr[@]}" "newest")
+echo "${arr[@]}"
+new newest
+
+declare -A arr
+arr["key1"]=val1
+arr+=(["key2"]=val2 ["key3"]=val3)
+
+for key in "${!arr[@]}"; do
+	echo "${key}" "${arr[${key}]}"
+done
+# all values using :
+echo "${arr[@]}"
+# all keys only using:
+echo "${!arr[@]}"
