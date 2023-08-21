@@ -1,11 +1,11 @@
 #!/usr/bin/bash
 ###run this script with sudo -E -s ./retest4.sh
-# net_dir=/etc/netplan
-net_dir=$(pwd)
+net_dir=/etc/netplan
+# net_dir=$(pwd)
 # net_file="$net_dir/01-$POINT-dhcp4-$DHCP4.yaml"
 net_file="$net_dir"/01-config.yaml
 this_dir_path="$(dirname "$(realpath "$0")")"
-this_config="$this_dir_path/retest4.sh"
+this_config="$this_dir_path/netplan_generate.sh"
 
 RC='\e[0m'
 # RV='\u001b[7m'
@@ -15,15 +15,14 @@ GREEN='\e[32m'
 GREEN2='[32;1m'
 WHITE='[37;1m'
 BLUE='[34;1m'
-if [ ! -f "$KEYSDIR/keysnet.sh" ]; then
-	command source "$KEYSDIR/keysnet.sh"
+
+if [ -f "$keysdir/netkeys.sh" ]; then
+	command source "$keysdir/netkeys.sh"
 else
-	command source "$KEYSDIR/keysnet.sh"
-	echo "keys file not found, creating it"
-	# KEYSDIR="$HOME/keysdir"
-	# mkdir -p "$KEYSDIR"
-	# touch "$KEYSDIR/keysnet.sh"
-	echo -e '#!/bin/bash \ndeclare -A points' >"$this_dir_path/keysnet.sh"
+	keysdir="$HOME/.keysdir"
+	echo "keys file not found, creating him in $keysdir"
+	mkdir -p "$keysdir"
+	echo -e '#!/bin/bash \ndeclare -A points' >"$keysdir/netkeys.sh"
 fi
 if [ "$HOSTNAME" = vaio ]; then
 	radio_adapter=wlp7s0
@@ -38,6 +37,7 @@ else
 	radio_adapter=$radio_adapter
 	lan_adapter=$lan_adapter
 fi
+
 renderer=("NetworkManager" "networkd")
 interface=("wifis" "ethernets")
 adapter=("$radio_adapter" "$lan_adapter")
@@ -53,8 +53,8 @@ INTERFACE="${interface[0]}"
 ADAPTER="${adapter[0]}"
 DHCP4="${dhcp4_ref[0]}"
 VAR_ROUTES="${var_routes[0]}"
-POINT=${point[2]}
-PASS_POINT=${pass_point[2]}
+POINT=${point[0]}
+PASS_POINT=${pass_point[0]}
 ##########################
 #####   51 -57 !!!  ######
 ##########################
@@ -140,6 +140,14 @@ elif [ "$INTERFACE" = ethernets ]; then
 	}
 fi
 
+function whatsmyip() {
+	echo -n "Internal IP: "
+	ifconfig "$radio_adapter" |
+		grep "inet " | awk -F: '{print $1}' | awk '{print $2}'
+	echo -n "External IP: "
+	dig @resolver4.opendns.com myip.opendns.com +short
+}
+
 # Menu TUI
 echo -e "\u001b${GREEN} Setting up netplan...${RC}"
 echo -e "$(up)"
@@ -167,7 +175,7 @@ case $option in
 	whatsmyip
 	;;
 "a")
-	# cat -e "$KEYSDIR/keysnet"
+	# cat -e "$keysdir/netkeys.sh"
 	echo -e "\u001b${GREEN} Setting up point...${RC}"
 
 	count=0
@@ -211,8 +219,8 @@ case $option in
 			read -r pn_pass
 			# point+=(["$pn"]=$pn_pass)
 			# "$this_config"
-			echo -e "point[$pn]=$pn_pass" >>"$this_dir_path"/keysnet.sh
-			# "$this_config" --scanned "$pn" "$pn_pass"
+			echo -e "point[$pn]=$pn_pass" >>"$keysdir"/netkeys.sh
+			"$this_config" --scanned "$pn" "$pn_pass"
 			;;
 		esac
 
@@ -252,20 +260,5 @@ x)
 esac
 
 # exit 0
-
-# netplan apply
-
-function whatsmyip() {
-	# Internal IP Lookup
-	echo -n "Internal IP: "
-	# ifconfig enp2s0 \
-	ifconfig "$radio_adapter" |
-		# grep "inet" | awk -F: '{print $2}' | awk '{print $1}'
-		grep "inet " | awk -F: '{print $1}' | awk '{print $2}'
-	# External IP Lookup
-	echo -n "External IP: "
-	# wget http://smart-ip.net/myip -O - -q
-	dig @resolver4.opendns.com myip.opendns.com +short
-}
 
 #run this script with sudo -E -s ./netplan.sh.sh
