@@ -15,14 +15,16 @@ GREEN='\e[32m'
 GREEN2='[32;1m'
 WHITE='[37;1m'
 BLUE='[34;1m'
-
-if [ -f "$KEYSDIR/keysnet.sh" ]; then
+if [ ! -f "$KEYSDIR/keysnet.sh" ]; then
 	command source "$KEYSDIR/keysnet.sh"
 else
-	echo "keys file not found"
-	echo ""
+	command source "$KEYSDIR/keysnet.sh"
+	echo "keys file not found, creating it"
+	# KEYSDIR="$HOME/keysdir"
+	# mkdir -p "$KEYSDIR"
+	# touch "$KEYSDIR/keysnet.sh"
+	echo -e '#!/bin/bash \ndeclare -A points' >"$this_dir_path/keysnet.sh"
 fi
-
 if [ "$HOSTNAME" = vaio ]; then
 	radio_adapter=wlp7s0
 	# lan_adapter=enp2s0
@@ -36,7 +38,6 @@ else
 	radio_adapter=$radio_adapter
 	lan_adapter=$lan_adapter
 fi
-
 renderer=("NetworkManager" "networkd")
 interface=("wifis" "ethernets")
 adapter=("$radio_adapter" "$lan_adapter")
@@ -44,7 +45,6 @@ dhcp4_ref=("true" "no")
 var_routes=("1" "0")
 point=("${!points[@]}")
 pass_point=("${points[@]}")
-
 ##########################
 ### Don't move this    ###
 ##########################
@@ -204,12 +204,15 @@ case $option in
 		read -r pnt
 
 		case $pnt in
-		*[0-9]*)
+		[0-9])
 			pn=${num_point[(($pnt - 1))]}
 			echo -e "point is $pn"
 			echo -n " Please enter the password for $pn: "
 			read -r pn_pass
-			"$this_config" --scanned "$pn" "$pn_pass"
+			# point+=(["$pn"]=$pn_pass)
+			# "$this_config"
+			echo -e "point[$pn]=$pn_pass" >>"$this_dir_path"/keysnet.sh
+			# "$this_config" --scanned "$pn" "$pn_pass"
 			;;
 		esac
 
