@@ -33,8 +33,8 @@ interface=("wifis" "ethernets")
 adapter=("$radio_adapter" "$lan_adapter")
 dhcp4_ref=("true" "no")
 var_routes=("1" "0")
-point=("${!points[@]}")
-pass_point=("${points[@]}")
+key_point=("${!points[@]}")
+key_pass_point=("${points[@]}")
 
 declare -A arr
 arr+=(["RENDERER"]=${renderer[0]})
@@ -42,20 +42,27 @@ arr+=(["INTERFACE"]=${interface[0]})
 arr+=(["ADAPTER"]=${adapter[0]})
 arr+=(["DHCP4"]=${dhcp4_ref[0]})
 arr+=(["VAR_ROUTES"]=${var_routes[0]})
-arr+=(["POINT"]=${point[0]})
-arr+=(["PASS_POINT"]=${pass_point[0]})
+arr+=(["POINT"]=${key_point[0]})
+arr+=(["PASS_POINT"]=${key_pass_point[0]})
 
 arr_key=("${!arr[@]}")
 arr_value=("${arr[@]}")
 
-count=0
-for v in "${arr_key[@]}"; do
-	if [ ! -z "$v" ]; then
-		export "$v"="${arr_value[$count]}"
-		echo -e "fff $v=${arr_value[$count]}"
-		count=$(("$count" + 1))
-	fi
-done
+vars_file="$this_dir_path/set_vars.sh"
+
+if [ -f "$vars_file" ]; then
+	command source "$vars_file"
+else
+	echo -e '#!/bin/bash' >"$vars_file"
+	count=0
+	for v in "${arr_key[@]}"; do
+		if [ ! -z "$v" ]; then
+			echo -e "$v=${arr_value[$count]}" >>"$vars_file"
+			count=$(("$count" + 1))
+		fi
+	done
+	command source "$vars_file"
+fi
 
 for i in "$@"; do
 	case $i in
@@ -161,9 +168,18 @@ case $option in
 	# 	chmod 660 "$net_file"
 	# fi
 	up >"$net_file"
-	netplan apply
+	# netplan apply
 	sleep 1
 	whatsmyip
+	echo -e "\u001b${GREEN} complete${RC}"
+	echo -e "\u001b${RED} Press y for remove $vars_file : "
+	read -r nn
+	if [ "$nn" = "y" ]; then
+		rm -f "$vars_file"
+		exit
+	else
+		exit
+	fi
 	;;
 
 "a")
@@ -171,8 +187,8 @@ case $option in
 	echo -e "\u001b${GREEN} Setting up point...${RC}"
 
 	count=0
-	for p in "${point[@]}"; do
-		# POINT="$p"
+	for p in "${key_point[@]}"; do
+		POINT="$p"
 		count="$(("$count" + 1))"
 		echo -e "  \u001b${BLUE} Press $count for $p connecting ${RC} "
 	done
@@ -184,13 +200,8 @@ case $option in
 	case $op in
 	[0-9])
 		pp="$(("$op" - 1))"
-
-		echo -e "arr[$POINT]=${point[$pp]}" >>"$tmp_file"
-		echo -e "arr[$PASS_POINT]=${pass_point[$pp]}" >>"$tmp_file"
-
-		# arr+=([POINT]=${point[$pp]})
-		# arr+=([PASS_POINT]=${pass_point[$pp]})
-		# echo -e ${arr[POINT]}"
+		echo -e "POINT=${key_point[$pp]}" >>"$vars_file"
+		echo -e "PASS_POINT=${key_pass_point[$pp]}" >>"$vars_file"
 		"$this_config"
 		;;
 	"s")
@@ -207,17 +218,14 @@ case $option in
 
 		case $pnt in
 		[0-9])
-			pn=${arr_point[(("$pnt" - 1))]}
+			num=$(("$pnt" - 1))
+			pn=${arr_point[$num]}
 			echo -n " Enter the password for $pn: "
 			read -r pn_pass
 			echo -e "point[$pn]=$pn_pass" >>"$keysdir/netkeys.sh"
 
-			echo -e "arr[$POINT]=${point[$pn]}" >>"$tmp_file"
-			echo -e "arr[$PASS_POINT]=${pass_point[$pn]}" >>"$tmp_file"
-
-			# arr+=([POINT]=${point[$pn]})
-			# arr+=([PASS_POINT]=${pass_point[$pn]})
-			# point+=(["$pn"]=$pn_pass)
+			echo -e "POINT=${point[$pn]}" >>"$vars_file"
+			echo -e "PASS_POINT=${pass_point[$pn]}" >>"$vars_file"
 			"$this_config"
 			;;
 		esac
@@ -227,6 +235,7 @@ case $option in
 
 	'' | *[!0-9]*)
 		echo "bad option"
+		"$this_config"
 		;;
 	esac
 	;;
@@ -235,10 +244,9 @@ case $option in
 	echo -e "\u001b${GREEN} Setting up dhcp4...${RC}"
 
 	if [ "$DHCP4" = "true" ]; then
-		echo -e "arr[$DHCP4]=no" >>"$tmp_file"
+		echo -e "DHCP4=no" >>"$vars_file"
 	elif [ "$DHCP4" = "no" ]; then
-		arr+=(["$DHCP4"]=true)
-		echo -e "arr[$DHCP4]=true" >>"$tmp_file"
+		echo -e "DHCP4=true" >>"$vars_file"
 	fi
 	"$this_config"
 	;;
@@ -246,9 +254,9 @@ case $option in
 "i")
 	echo -e "\u001b${GREEN} Setting up interface...${RC}"
 	if [ "$INTERFACE" = "wifis" ]; then
-		echo -e "arr[$INTERFACE]=ethernets" >>"$tmp_file"
+		echo -e "INTERFACE=ethernets" >>"$vars_file"
 	elif [ "$INTERFACE" = "ethernets" ]; then
-		echo -e "arr[$INTERFACE]=wifis" >>"$tmp_file"
+		echo -e "INTERFACE=wifis" >>"$vars_file"
 	fi
 	"$this_config"
 	;;
