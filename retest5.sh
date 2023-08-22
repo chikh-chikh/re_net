@@ -6,6 +6,9 @@ net_dir=$(pwd)
 net_file="$net_dir"/01-config.yaml
 this_dir_path="$(dirname "$(realpath "$0")")"
 this_config="$(readlink -f "$0")"
+vars_file="$this_dir_path/set_vars.sh"
+keys_file="$keysdir/netkeys.sh"
+
 RC='\e[0m'
 # RV='\u001b[7m'
 RED='\e[31m'
@@ -17,35 +20,28 @@ BLUE='[34;1m'
 
 command source "$this_dir_path"/bin/check_adapters.sh
 
-# s_f() {
-if [ -f "$keysdir/netkeys.sh" ]; then
-	command source "$keysdir/netkeys.sh"
+if [ -f "$keys_file" ]; then
+	command source "$keys_file"
+	echo -e "You have a "${#points[@]}" wi-fi keys"
 else
 	keysdir="$HOME/.keysdir"
 	echo "keys file not found, creating him in $keysdir"
 	mkdir -p "$keysdir"
-	echo -e '#!/bin/bash \ndeclare -A points' >"$keysdir/netkeys.sh"
+	echo -e '#!/bin/bash \ndeclare -A points' >"$keys_file"
+	command source "$keys_file"
+	echo -e "You have a ${#points[@]} wi-fi keys"
 fi
+
 key_point=("${!points[@]}")
 key_pass_point=("${points[@]}")
-
-echo -e "${key_point[@]}"
-echo -e "${key_pass_point[@]}"
-# 	echo -e "====== ${#points[@]}"
-# }
-# s_f
-
-local_ip=27
-
+# echo -e "${key_point[@]}"
+# echo -e "${key_pass_point[@]}"
 renderer=("NetworkManager" "networkd")
 interface=("wifis" "ethernets")
 adapter=("$radio_adapter" "$lan_adapter")
 dhcp4_ref=("true" "no")
 var_routes=("1" "0")
-# key_point=("${!points[@]}")
-# key_pass_point=("${points[@]}")
-
-echo -e "====== ${#points[@]}"
+local_ip=("27" "9" "10" "12")
 
 declare -A arr
 arr+=(["RENDERER"]=${renderer[0]})
@@ -55,11 +51,11 @@ arr+=(["DHCP4"]=${dhcp4_ref[0]})
 arr+=(["VAR_ROUTES"]=${var_routes[0]})
 arr+=(["POINT"]=${key_point[0]})
 arr+=(["PASS_POINT"]=${key_pass_point[0]})
+arr+=(["LOCAL_IP"]=${local_ip[0]})
 
 arr_key=("${!arr[@]}")
 arr_value=("${arr[@]}")
 
-vars_file="$this_dir_path/set_vars.sh"
 if [ -f "$vars_file" ]; then
 	command source "$vars_file"
 else
@@ -74,14 +70,6 @@ fi
 
 for i in "$@"; do
 	case $i in
-	--scanned)
-		POINT=$2
-		PASS_POINT=$3
-		;;
-		# --point=[0-9]) #1,2,3
-		# 	eval POINT=\$wan_point"${i:8}"
-		# 	eval PASS_POINT=\$wan_pass_point"${i:8}"
-		# ;;
 	--dhcp=no)
 		DHCP4="${dhcp4_ref[0]}"
 		;;
@@ -94,14 +82,8 @@ for i in "$@"; do
 	esac
 done
 
-if [ "$INTERFACE" = "wifis" ]; then
-	ADAPTER=$radio_adapter
-elif [ "$INTERFACE" = "ethernets" ]; then
-	ADAPTER=$lan_adapter
-fi
-
-dhcp4_addresses=[192.168."${VAR_ROUTES}".$local_ip/24]
-routes_via=192.168."${VAR_ROUTES}".1
+dhcp4_addresses=[192.168."$VAR_ROUTES"."$LOCAL_IP"/24]
+routes_via=192.168."$VAR_ROUTES".1
 nameserv_addr=[8.8.8.8,8.8.4.4]
 # nameserv_addr=[192.168."${VAR_ROUTES}".1,8.8.8.8]
 
@@ -128,6 +110,7 @@ dhcp4_stat() {
 }
 
 if [ "$INTERFACE" = wifis ]; then
+	ADAPTER=$radio_adapter
 	if [ "$DHCP4" = true ]; then
 		up() {
 			echo_f
@@ -141,6 +124,7 @@ if [ "$INTERFACE" = wifis ]; then
 		}
 	fi
 elif [ "$INTERFACE" = ethernets ]; then
+	ADAPTER=$lan_adapter
 	up() {
 		echo_f
 		dhcp4_stat
@@ -162,13 +146,10 @@ echo -e "  \u001b${BLUE} (a) any points ${RC}"
 echo -e "  \u001b${BLUE} (d) change dhcp ${RC}"
 echo -e "  \u001b${BLUE} (i) change interface ${RC}"
 echo -e "  \u001b${RED} (x) Anything else to exit ${RC}"
-
 echo -en "\u001b${GREEN2} ==> ${RC}"
 
 read -r option
-
 case $option in
-
 "y")
 	# rm -rf "$net_dir"/01-*.yaml
 	# if [ ! -f "$net_file" ]; then
@@ -181,6 +162,7 @@ case $option in
 	whatsmyip
 	echo -e "\u001b${GREEN} complete${RC}"
 	echo -e "\u001b${RED} Press y for remove $vars_file"
+	echo -en "\u001b${GREEN2} ==> ${RC}"
 	read -r nn
 	case "$nn" in
 	y)
@@ -195,67 +177,63 @@ case $option in
 
 "a")
 	echo -e "\u001b${GREEN} Setting up point...${RC}"
-
 	count=0
 	for p in "${key_point[@]}"; do
-		# POINT="$p"
 		count="$(("$count" + 1))"
 		echo -e "  \u001b${BLUE} Press $count for $p connecting ${RC} "
 	done
-
 	echo -e "  \u001b${BLUE} Press s for scan wi-fi points ${RC} "
 	echo -e "  \u001b${RED} (x) Anything else to exit ${RC}"
-	read -r op
+	echo -en "\u001b${GREEN2} ==> ${RC}"
 
+	read -r op
 	case $op in
 	[0-9])
-		pp="$(("$op" - 1))"
-		echo -e "POINT=${key_point[$pp]}" >>"$vars_file"
-		echo -e "PASS_POINT=${key_pass_point[$pp]}" >>"$vars_file"
+		p_ind="$(("$op" - 1))"
+		echo -e "POINT=${key_point[$p_ind]}" >>"$vars_file"
+		echo -e "PASS_POINT=${key_pass_point[$p_ind]}" >>"$vars_file"
 		"$this_config"
 		;;
+
 	"s")
 		echo "scan wi-fi point"
-		cnt=0
 		arr_pnt=()
+		cnt=0
 		list_pnts=$("$this_dir_path"/bin/wifi_list.sh)
-		for p in $list_pnts; do
+		for ps in $list_pnts; do
+			arr_pnt+=("$ps")
 			cnt="$(("$cnt" + 1))"
-			arr_pnt+=("$p")
-			echo -e "  \u001b${BLUE} Press $cnt for $p connecting ${RC} "
+			echo -e "\u001b${BLUE} Press $cnt for $ps connecting ${RC} "
 		done
-		read -r pnt
 
+		read -r pnt
 		case $pnt in
 		*[0-9]*)
 			num=$(("$pnt" - 1))
 			pname=${arr_pnt[$num]}
 			echo -n " Enter the password for $pname: "
 			read -r pn_pass
-			echo -e "points[$pname]=\"$pn_pass\"" >>"$keysdir/netkeys.sh"
+			echo -e "points[$pname]=$pn_pass" >>"$keysdir/netkeys.sh"
 
 			key_point=("${key_point[@]}" "$pname")
 			key_pass_point=("${key_pass_point[@]}" "$pn_pass")
 
-			echo -e "${key_point[@]}"
-			echo -e "${key_pass_point[@]}"
+			corr_num=$(("${#key_point[@]}" - 1))
 
-			n="${#key_point[@]}"
-			correct_num=$(("$n" - 1))
-
-			echo -e "POINT=${key_point[$correct_num]}" >>"$vars_file"
-			echo -e "PASS_POINT=${key_pass_point[$correct_num]}" >>"$vars_file"
+			echo -e "POINT=${key_point[$corr_num]}" >>"$vars_file"
+			echo -e "PASS_POINT=${key_pass_point[$corr_num]}" >>"$vars_file"
 			"$this_config"
 			;;
 		esac
 
-		echo -e "  \u001b${RED} (x) Anything else to exit ${RC}"
+		echo -e "\u001b${RED} (x) Anything else to exit ${RC}"
+		echo -en "\u001b${GREEN2} ==> ${RC}"
 		;;
 
-	'' | *[!0-9]*)
-		echo "bad option"
-		"$this_config"
-		;;
+	# '' | *[!0-9]*)
+	# 	echo "\u001b${RED} bad option"
+	# 	"$this_config"
+	# 	;;
 	esac
 	;;
 
