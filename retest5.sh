@@ -17,6 +17,7 @@ BLUE='[34;1m'
 
 command source "$this_dir_path"/bin/check_adapters.sh
 
+# s_f() {
 if [ -f "$keysdir/netkeys.sh" ]; then
 	command source "$keysdir/netkeys.sh"
 else
@@ -25,6 +26,14 @@ else
 	mkdir -p "$keysdir"
 	echo -e '#!/bin/bash \ndeclare -A points' >"$keysdir/netkeys.sh"
 fi
+key_point=("${!points[@]}")
+key_pass_point=("${points[@]}")
+
+echo -e "${key_point[@]}"
+echo -e "${key_pass_point[@]}"
+# 	echo -e "====== ${#points[@]}"
+# }
+# s_f
 
 local_ip=27
 
@@ -33,8 +42,10 @@ interface=("wifis" "ethernets")
 adapter=("$radio_adapter" "$lan_adapter")
 dhcp4_ref=("true" "no")
 var_routes=("1" "0")
-key_point=("${!points[@]}")
-key_pass_point=("${points[@]}")
+# key_point=("${!points[@]}")
+# key_pass_point=("${points[@]}")
+
+echo -e "====== ${#points[@]}"
 
 declare -A arr
 arr+=(["RENDERER"]=${renderer[0]})
@@ -49,17 +60,14 @@ arr_key=("${!arr[@]}")
 arr_value=("${arr[@]}")
 
 vars_file="$this_dir_path/set_vars.sh"
-
 if [ -f "$vars_file" ]; then
 	command source "$vars_file"
 else
 	echo -e '#!/bin/bash' >"$vars_file"
 	count=0
 	for v in "${arr_key[@]}"; do
-		if [ ! -z "$v" ]; then
-			echo -e "$v=${arr_value[$count]}" >>"$vars_file"
-			count=$(("$count" + 1))
-		fi
+		echo -e "$v=${arr_value[$count]}" >>"$vars_file"
+		count=$(("$count" + 1))
 	done
 	command source "$vars_file"
 fi
@@ -172,23 +180,25 @@ case $option in
 	sleep 1
 	whatsmyip
 	echo -e "\u001b${GREEN} complete${RC}"
-	echo -e "\u001b${RED} Press y for remove $vars_file : "
+	echo -e "\u001b${RED} Press y for remove $vars_file"
 	read -r nn
-	if [ "$nn" = "y" ]; then
+	case "$nn" in
+	y)
 		rm -f "$vars_file"
 		exit
-	else
+		;;
+	n)
 		exit
-	fi
+		;;
+	esac
 	;;
 
 "a")
-	# cat -e "$KEYSDIR/keysnet"
 	echo -e "\u001b${GREEN} Setting up point...${RC}"
 
 	count=0
 	for p in "${key_point[@]}"; do
-		POINT="$p"
+		# POINT="$p"
 		count="$(("$count" + 1))"
 		echo -e "  \u001b${BLUE} Press $count for $p connecting ${RC} "
 	done
@@ -206,26 +216,35 @@ case $option in
 		;;
 	"s")
 		echo "scan wi-fi point"
-		count=0
-		arr_point=()
-		list_points=$("$this_dir_path"/bin/wifi_list.sh)
-		for p in $list_points; do
-			count="$(("$count" + 1))"
-			arr_point+=("$p")
-			echo -e "  \u001b${BLUE} Press $count for $p connecting ${RC} "
+		cnt=0
+		arr_pnt=()
+		list_pnts=$("$this_dir_path"/bin/wifi_list.sh)
+		for p in $list_pnts; do
+			cnt="$(("$cnt" + 1))"
+			arr_pnt+=("$p")
+			echo -e "  \u001b${BLUE} Press $cnt for $p connecting ${RC} "
 		done
 		read -r pnt
 
 		case $pnt in
-		[0-9])
+		*[0-9]*)
 			num=$(("$pnt" - 1))
-			pn=${arr_point[$num]}
-			echo -n " Enter the password for $pn: "
+			pname=${arr_pnt[$num]}
+			echo -n " Enter the password for $pname: "
 			read -r pn_pass
-			echo -e "point[$pn]=$pn_pass" >>"$keysdir/netkeys.sh"
+			echo -e "points[$pname]=\"$pn_pass\"" >>"$keysdir/netkeys.sh"
 
-			echo -e "POINT=${point[$pn]}" >>"$vars_file"
-			echo -e "PASS_POINT=${pass_point[$pn]}" >>"$vars_file"
+			key_point=("${key_point[@]}" "$pname")
+			key_pass_point=("${key_pass_point[@]}" "$pn_pass")
+
+			echo -e "${key_point[@]}"
+			echo -e "${key_pass_point[@]}"
+
+			n="${#key_point[@]}"
+			correct_num=$(("$n" - 1))
+
+			echo -e "POINT=${key_point[$correct_num]}" >>"$vars_file"
+			echo -e "PASS_POINT=${key_pass_point[$correct_num]}" >>"$vars_file"
 			"$this_config"
 			;;
 		esac
