@@ -5,7 +5,7 @@ net_dir=$(pwd)
 # net_file="$net_dir/01-$POINT-dhcp4-$DHCP4.yaml"
 net_file="$net_dir"/01-config.yaml
 this_dir_path="$(dirname "$(realpath "$0")")"
-this_config="$this_dir_path/retest5.sh"
+this_config="$(readlink -f "$0")"
 RC='\e[0m'
 # RV='\u001b[7m'
 RED='\e[31m'
@@ -15,6 +15,8 @@ GREEN2='[32;1m'
 WHITE='[37;1m'
 BLUE='[34;1m'
 
+command source "$this_dir_path"/bin/check_adapters.sh
+
 if [ -f "$keysdir/netkeys.sh" ]; then
 	command source "$keysdir/netkeys.sh"
 else
@@ -23,18 +25,18 @@ else
 	mkdir -p "$keysdir"
 	echo -e '#!/bin/bash \ndeclare -A points' >"$keysdir/netkeys.sh"
 fi
-#
-#
-#
-#
-#
-#
-#
-#
-#
-command source "$this_dir_path"/bin/check_adapters.sh
-#
-#
+
+tmp_file="$this_dir_path/tmp_file"
+if [ ! -f "$tmp_file" ]; then
+	touch "$tmp_file"
+	echo -e '#!/bin/bash \ndeclare -A arr' >"$tmp_file"
+else
+	command source "$tmp_file"
+fi
+
+arr_key=("${!arr[@]}")
+arr_value=("${arr[@]}")
+
 local_ip=27
 
 renderer=("NetworkManager" "networkd")
@@ -45,19 +47,13 @@ var_routes=("1" "0")
 point=("${!points[@]}")
 pass_point=("${points[@]}")
 
-##########################
-### Don't move this    ###
-##########################
 RENDERER="${renderer[0]}"
 INTERFACE="${interface[0]}"
 ADAPTER="${adapter[0]}"
 DHCP4="${dhcp4_ref[0]}"
 VAR_ROUTES="${var_routes[0]}"
-POINT=${point[0]}
-PASS_POINT=${pass_point[0]}
-##########################
-#####   51 -57 !!!  ######
-##########################
+# POINT=${point[0]}
+# PASS_POINT=${pass_point[0]}
 
 for i in "$@"; do
 	case $i in
@@ -65,10 +61,10 @@ for i in "$@"; do
 		POINT=$2
 		PASS_POINT=$3
 		;;
-	--point=[0-9]) #1,2,3
-		eval POINT=\$wan_point"${i:8}"
-		eval PASS_POINT=\$wan_pass_point"${i:8}"
-		;;
+		# --point=[0-9]) #1,2,3
+		# 	eval POINT=\$wan_point"${i:8}"
+		# 	eval PASS_POINT=\$wan_pass_point"${i:8}"
+		# ;;
 	--dhcp=no)
 		DHCP4="${dhcp4_ref[0]}"
 		;;
@@ -174,47 +170,53 @@ case $option in
 
 	count=0
 	for p in "${point[@]}"; do
-		POINT="$p"
+		# POINT="$p"
 		count="$(("$count" + 1))"
-		echo -e "  \u001b${BLUE} Press $count for $POINT connecting ${RC} "
+		echo -e "  \u001b${BLUE} Press $count for $p connecting ${RC} "
 	done
 
 	echo -e "  \u001b${BLUE} Press s for scan wi-fi points ${RC} "
 	echo -e "  \u001b${RED} (x) Anything else to exit ${RC}"
 	read -r op
 
-	POINT=${point[0]}
-	PASS_POINT=${pass_point[0]}
-
 	case $op in
 	[0-9])
 		pp="$(("$op" - 1))"
-		sed -i "56 s/POINT=\${point\[.\]\}/POINT=\${point[$pp]}/g" "$this_config"
-		sed -i "57 s/PASS_POINT=\${pass_point\[.\]\}/PASS_POINT=\${pass_point[$pp]}/g" "$this_config"
+
+		echo -e "arr[$POINT]=${point[$pp]}" >>"$tmp_file"
+		echo -e "arr[$PASS_POINT]=${pass_point[$pp]}" >>"$tmp_file"
+
+		# arr+=([POINT]=${point[$pp]})
+		# arr+=([PASS_POINT]=${pass_point[$pp]})
+		# echo -e ${arr[POINT]}"
 		"$this_config"
 		;;
 	"s")
 		echo "scan wi-fi point"
 		count=0
-		num_point=()
-		points=$("$this_dir_path"/bin/wifi_list.sh)
-		for p in $points; do
+		arr_point=()
+		list_points=$("$this_dir_path"/bin/wifi_list.sh)
+		for p in $list_points; do
 			count="$(("$count" + 1))"
-			num_point+=("$p")
+			arr_point+=("$p")
 			echo -e "  \u001b${BLUE} Press $count for $p connecting ${RC} "
 		done
 		read -r pnt
 
 		case $pnt in
 		[0-9])
-			pn=${num_point[(($pnt - 1))]}
-			echo -e "point is $pn"
-			echo -n " Please enter the password for $pn: "
+			pn=${arr_point[(("$pnt" - 1))]}
+			echo -n " Enter the password for $pn: "
 			read -r pn_pass
+			echo -e "point[$pn]=$pn_pass" >>"$keysdir/netkeys.sh"
+
+			echo -e "arr[$POINT]=${point[$pn]}" >>"$tmp_file"
+			echo -e "arr[$PASS_POINT]=${pass_point[$pn]}" >>"$tmp_file"
+
+			# arr+=([POINT]=${point[$pn]})
+			# arr+=([PASS_POINT]=${pass_point[$pn]})
 			# point+=(["$pn"]=$pn_pass)
-			# "$this_config"
-			echo -e "point[$pn]=$pn_pass" >>"$this_dir_path"/keysnet.sh
-			# "$this_config" --scanned "$pn" "$pn_pass"
+			"$this_config"
 			;;
 		esac
 
@@ -229,10 +231,12 @@ case $option in
 
 "d")
 	echo -e "\u001b${GREEN} Setting up dhcp4...${RC}"
+
 	if [ "$DHCP4" = "true" ]; then
-		sed -i '54 s/DHCP4=\"\${dhcp4_ref\[0\]\}\"/DHCP4="${dhcp4_ref[1]}"/g' "$this_config"
+		echo -e "arr[$DHCP4]=no" >>"$tmp_file"
 	elif [ "$DHCP4" = "no" ]; then
-		sed -i '54 s/DHCP4=\"\${dhcp4_ref\[1\]\}\"/DHCP4="${dhcp4_ref[0]}"/g' "$this_config"
+		arr+=(["$DHCP4"]=true)
+		echo -e "arr[$DHCP4]=true" >>"$tmp_file"
 	fi
 	"$this_config"
 	;;
@@ -240,9 +244,9 @@ case $option in
 "i")
 	echo -e "\u001b${GREEN} Setting up interface...${RC}"
 	if [ "$INTERFACE" = "wifis" ]; then
-		sed -i '52 s/INTERFACE=\"\${interface\[0\]\}\"/INTERFACE="${interface[1]}"/g' "$this_config"
+		echo -e "arr[$INTERFACE]=ethernets" >>"$tmp_file"
 	elif [ "$INTERFACE" = "ethernets" ]; then
-		sed -i '52 s/INTERFACE=\"\${interface\[1\]\}\"/INTERFACE="${interface[0]}"/g' "$this_config"
+		echo -e "arr[$INTERFACE]=wifis" >>"$tmp_file"
 	fi
 	"$this_config"
 	;;
