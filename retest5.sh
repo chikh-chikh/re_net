@@ -26,17 +26,6 @@ else
 	echo -e '#!/bin/bash \ndeclare -A points' >"$keysdir/netkeys.sh"
 fi
 
-tmp_file="$this_dir_path/tmp_file"
-if [ ! -f "$tmp_file" ]; then
-	touch "$tmp_file"
-	echo -e '#!/bin/bash \ndeclare -A arr' >"$tmp_file"
-else
-	command source "$tmp_file"
-fi
-
-arr_key=("${!arr[@]}")
-arr_value=("${arr[@]}")
-
 local_ip=27
 
 renderer=("NetworkManager" "networkd")
@@ -47,24 +36,26 @@ var_routes=("1" "0")
 point=("${!points[@]}")
 pass_point=("${points[@]}")
 
-list_ref_v=("${renderer[0]}" "${interface[0]}" "${adapter[0]}" "${dhcp4_ref[0]}" "${var_routes[0]}")
-list_v=("RENDERER" "INTERFACE" "ADAPTER" "DHCP4" "VAR_ROUTES" "POINT" "PASS_POINT")
+declare -A arr
+arr+=(["RENDERER"]=${renderer[0]})
+arr+=(["INTERFACE"]=${interface[0]})
+arr+=(["ADAPTER"]=${adapter[0]})
+arr+=(["DHCP4"]=${dhcp4_ref[0]})
+arr+=(["VAR_ROUTES"]=${var_routes[0]})
+arr+=(["POINT"]=${point[0]})
+arr+=(["PASS_POINT"]=${pass_point[0]})
+
+arr_key=("${!arr[@]}")
+arr_value=("${arr[@]}")
+
 count=0
-for v in "${list_v[@]}"; do
+for v in "${arr_key[@]}"; do
 	if [ ! -z "$v" ]; then
-		# export "$v"="${list_ref_v[0]}"
-		echo -e "fff $v=${list_ref_v[$count]}"
+		export "$v"="${arr_value[$count]}"
+		echo -e "fff $v=${arr_value[$count]}"
 		count=$(("$count" + 1))
 	fi
 done
-
-# RENDERER="${renderer[0]}"
-# INTERFACE="${interface[0]}"
-# ADAPTER="${adapter[0]}"
-# DHCP4="${dhcp4_ref[0]}"
-# VAR_ROUTES="${var_routes[0]}"
-# POINT=${point[0]}
-# PASS_POINT=${pass_point[0]}
 
 for i in "$@"; do
 	case $i in
