@@ -47,11 +47,23 @@ var_routes=("1" "0")
 point=("${!points[@]}")
 pass_point=("${points[@]}")
 
-RENDERER="${renderer[0]}"
-INTERFACE="${interface[0]}"
-ADAPTER="${adapter[0]}"
-DHCP4="${dhcp4_ref[0]}"
-VAR_ROUTES="${var_routes[0]}"
+list_ref_v=("${renderer[0]}" "${interface[0]}" "${adapter[0]}" "${dhcp4_ref[0]}" "${var_routes[0]}")
+list_v=("RENDERER" "INTERFACE" "ADAPTER" "DHCP4" "VAR_ROUTES" "POINT" "PASS_POINT")
+count=0
+for v in "${list_v[@]}" and "${list_ref_v[@]}"; do
+	if [ ! -z "$v" ]; then
+		count=$(("$count" + 1))
+		num=$(("count" - 1))
+		# export "$v"="${list_ref_v[0]}"
+		echo -e "fff $v=${list_ref_v[$num]}"
+	fi
+done
+
+# RENDERER="${renderer[0]}"
+# INTERFACE="${interface[0]}"
+# ADAPTER="${adapter[0]}"
+# DHCP4="${dhcp4_ref[0]}"
+# VAR_ROUTES="${var_routes[0]}"
 # POINT=${point[0]}
 # PASS_POINT=${pass_point[0]}
 
