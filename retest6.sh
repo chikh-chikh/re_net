@@ -57,7 +57,7 @@ arr_key=("${!arr[@]}")
 arr_value=("${arr[@]}")
 
 for v in "${arr_key[@]}"; do
-	eval "$v=${arr_value[$count]}" >>"$vars_file"
+	eval "$v=${arr_value[$count]}"
 	count=$(("$count" + 1))
 done
 
