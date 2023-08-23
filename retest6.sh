@@ -9,14 +9,27 @@ this_config="$(readlink -f "$0")"
 vars_file="$this_dir_path/set_vars.sh"
 keys_file="$keysdir/netkeys.sh"
 
-RC='\e[0m'
-# RV='\u001b[7m'
-RED='\e[31m'
-# YELLOW='\e[33m'
-GREEN='\e[32m'
-GREEN2='[32;1m'
-WHITE='[37;1m'
-BLUE='[34;1m'
+black='\u001b[30;1m'
+red='\u001b[31;1m'
+green='\u001b[32;1m'
+yellow='\u001b[33;1m'
+blue='\u001b[34;1m'
+magenta='\u001b[35;1m'
+cyan='\u001b[36;1m'
+white='\u001b[37;1m'
+background_black='\u001b[40;1m'
+background_red='\u001b[41;1m'
+background_green='\u001b[42;1m'
+background_Yellow='\u001b[43;1m'
+background_blue='\u001b[44;1m'
+background_magenta='\u001b[45;1m'
+background_cyan='\u001b[46;1m'
+background_white='\u001b[47;1m'
+
+bold='\u001b[1m'
+underline='\u001b[4m'
+reversed='\u001b[7m'
+rc='\u001b[0m'
 
 command source "$this_dir_path"/bin/check_adapters.sh
 
@@ -115,14 +128,14 @@ function whatsmyip() {
 }
 
 # Menu TUI
-echo -e "\u001b${GREEN} Setting up netplan...${RC}"
+echo -e "${magenta} Setting up netplan...${rc}"
 echo -e "$(up)"
-echo -e "  \u001b${BLUE} (y) confirm ${RC}"
-echo -e "  \u001b${BLUE} (a) any points ${RC}"
-echo -e "  \u001b${BLUE} (d) change dhcp ${RC}"
-echo -e "  \u001b${BLUE} (i) change interface ${RC}"
-echo -e "  \u001b${RED} (x) Anything else to exit ${RC}"
-echo -en "\u001b${GREEN2} ==> ${RC}"
+echo -e "${blue} (y) confirm ${rc}"
+echo -e "${blue} (a) any points ${rc}"
+echo -e "${blue} (d) change dhcp ${rc}"
+echo -e "${blue} (i) change interface ${rc}"
+echo -e "${red} (x) Anything else to exit ${rc}"
+echo -en "${green} ==> ${rc}"
 
 read -r option
 case $option in
@@ -136,9 +149,9 @@ case $option in
 	# netplan apply
 	sleep 1
 	whatsmyip
-	echo -e "\u001b${GREEN} complete${RC}"
-	echo -e "\u001b${RED} Press y for remove $vars_file"
-	echo -en "\u001b${GREEN2} ==> ${RC}"
+	echo -e "${green} complete${rc}"
+	echo -e "${red} Press y for remove $vars_file"
+	echo -en "${green} ==> ${rc}"
 	read -r nn
 	case "$nn" in
 	y)
@@ -152,20 +165,15 @@ case $option in
 	;;
 
 "a")
-	# for l in "${list[@]}"; do
-	#   eval "$l"
-	# done
-	#
-
-	echo -e "\u001b${GREEN} Setting up point...${RC}"
+	echo -e "${green} Setting up point...${rc}"
 	count=0
 	for p in "${key_point[@]}"; do
 		count="$(("$count" + 1))"
-		echo -e "  \u001b${BLUE} Press $count for $p connecting ${RC} "
+		echo -e "${blue} Press $count for $p connecting ${rc} "
 	done
-	echo -e "  \u001b${BLUE} Press s for scan wi-fi points ${RC} "
-	echo -e "  \u001b${RED} (x) Anything else to exit ${RC}"
-	echo -en "\u001b${GREEN2} ==> ${RC}"
+	echo -e "${blue} Press s for scan wi-fi points ${rc} "
+	echo -e "${red} (x) Anything else to exit ${rc}"
+	echo -en "${green} ==> ${rc}"
 
 	read -r op
 	case $op in
@@ -183,7 +191,7 @@ case $option in
 		for ps in $list_pnts; do
 			arr_pnt+=("$ps")
 			cnt="$(("$cnt" + 1))"
-			echo -e "\u001b${BLUE} Press $cnt for $ps connecting ${RC} "
+			echo -e "${blue} Press $cnt for $ps connecting ${rc} "
 		done
 
 		read -r pnt
@@ -191,7 +199,7 @@ case $option in
 		*[0-9]*)
 			num=$(("$pnt" - 1))
 			pname=${arr_pnt[$num]}
-			echo -n " Enter the password for $pname: "
+			echo -n "Enter the password for $pname: "
 			read -r pn_pass
 			echo -e "points[$pname]=$pn_pass" >>"$keysdir/netkeys.sh"
 
@@ -205,19 +213,19 @@ case $option in
 			;;
 		esac
 
-		echo -e "\u001b${RED} (x) Anything else to exit ${RC}"
-		echo -en "\u001b${GREEN2} ==> ${RC}"
+		echo -e "${red} (x) Anything else to exit ${rc}"
+		echo -en "${green} ==> ${rc}"
 		;;
 
 	# '' | *[!0-9]*)
-	# 	echo "\u001b${RED} bad option"
+	# 	echo "${red} bad option"
 	# 	"$this_config"
 	# 	;;
 	esac
 	;;
 
 "d")
-	echo -e "\u001b${GREEN} Setting up dhcp4...${RC}"
+	echo -e "${green} Setting up dhcp4...${rc}"
 
 	if [ "$dhcp4" = "true" ]; then
 		vars_memory=("${vars_memory[@]}" "dhcp4=no")
@@ -229,7 +237,7 @@ case $option in
 	;;
 
 "i")
-	echo -e "\u001b${GREEN} Setting up interface...${RC}"
+	echo -e "${green} Setting up interface...${rc}"
 	if [ "$interface" = "wifis" ]; then
 		vars_memory=("${vars_memory[@]}" "interface=ethernets")
 	elif [ "$interface" = "ethernets" ]; then
@@ -239,7 +247,7 @@ case $option in
 	;;
 
 x)
-	echo -e "\u001b${GREEN} Invalid option entered, Bye! ${RC}"
+	echo -e "${green} Invalid option entered, Bye! ${rc}"
 	exit 0
 	;;
 esac
