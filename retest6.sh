@@ -2,7 +2,7 @@
 ###run this script with sudo -E -s ./retest4.sh
 # net_dir=/etc/netplan
 net_dir=$(pwd)
-# net_file="$net_dir/01-$POINT-dhcp4-$DHCP4.yaml"
+# net_file="$net_dir/01-$point-dhcp4-$dhcp4.yaml"
 net_file="$net_dir"/01-config.yaml
 this_dir_path="$(dirname "$(realpath "$0")")"
 this_config="$(readlink -f "$0")"
@@ -36,30 +36,21 @@ key_point=("${!points[@]}")
 key_pass_point=("${points[@]}")
 # echo -e "${key_point[@]}"
 # echo -e "${key_pass_point[@]}"
-renderer=("NetworkManager" "networkd")
-interface=("wifis" "ethernets")
-adapter=("$radio_adapter" "$lan_adapter")
-dhcp4_ref=("true" "no")
-var_routes=("1" "0")
-local_ip=("27" "9" "10" "12")
+renderer_list=("NetworkManager" "networkd")
+interface_list=("wifis" "ethernets")
+adapter_list=("$radio_adapter" "$lan_adapter")
+dhcp4_list=("true" "no")
+var_routes_list=("1" "0")
+local_ip_list=("27" "9" "10" "12")
 
-declare -A arr
-arr+=(["RENDERER"]=${renderer[0]})
-arr+=(["INTERFACE"]=${interface[0]})
-arr+=(["ADAPTER"]=${adapter[0]})
-arr+=(["DHCP4"]=${dhcp4_ref[0]})
-arr+=(["VAR_ROUTES"]=${var_routes[0]})
-arr+=(["POINT"]=${key_point[0]})
-arr+=(["PASS_POINT"]=${key_pass_point[0]})
-arr+=(["LOCAL_IP"]=${local_ip[0]})
-
-arr_key=("${!arr[@]}")
-arr_value=("${arr[@]}")
-
-for v in "${arr_key[@]}"; do
-	eval "$v=${arr_value[$count]}"
-	count=$(("$count" + 1))
-done
+renderer=${renderer_list[0]}
+interface=${interface_list[0]}
+adapter=${adapter_list[0]}
+dhcp4=${dhcp4_list[0]}
+var_router=${var_routes_list[0]}
+point=${key_point[0]}
+pass_point=${key_pass_point[0]}
+local_ip=${local_ip_list[0]}
 
 vars_memory=()
 for a in "$@"; do
@@ -67,23 +58,23 @@ for a in "$@"; do
 	eval "$a"
 done
 
-dhcp4_addresses=[192.168."$VAR_ROUTES"."$LOCAL_IP"/24]
-routes_via=192.168."$VAR_ROUTES".1
+dhcp4_addresses=[192.168."$var_router"."$local_ip"/24]
+routes_via=192.168."$var_router".1
 nameserv_addr=[8.8.8.8,8.8.4.4]
-# nameserv_addr=[192.168."${VAR_ROUTES}".1,8.8.8.8]
+# nameserv_addr=[192.168."${var_router}".1,8.8.8.8]
 
 echo_f() {
 	echo "network:                               "
 	echo "  version: 2                           "
-	echo "  renderer: $RENDERER                  "
-	echo "  $INTERFACE:                          "
-	echo "    $ADAPTER:                          "
+	echo "  renderer: $renderer                  "
+	echo "  $interface:                          "
+	echo "    $adapter:                          "
 }
 wifi_dhcp() {
 	echo "      access-points:                   "
-	echo "        $POINT:                        "
-	echo "          password: $PASS_POINT        "
-	echo "      dhcp4: $DHCP4                    "
+	echo "        $point:                        "
+	echo "          password: $pass_point        "
+	echo "      dhcp4: $dhcp4                    "
 }
 dhcp4_stat() {
 	echo "      addresses: $dhcp4_addresses      "
@@ -94,22 +85,22 @@ dhcp4_stat() {
 	echo "        addresses: $nameserv_addr      "
 }
 
-if [ "$INTERFACE" = wifis ]; then
-	ADAPTER=$radio_adapter
-	if [ "$DHCP4" = true ]; then
+if [ "$interface" = wifis ]; then
+	adapter=$radio_adapter
+	if [ "$dhcp4" = true ]; then
 		up() {
 			echo_f
 			wifi_dhcp
 		}
-	elif [ "$DHCP4" = no ]; then
+	elif [ "$dhcp4" = no ]; then
 		up() {
 			echo_f
 			wifi_dhcp
 			dhcp4_stat
 		}
 	fi
-elif [ "$INTERFACE" = ethernets ]; then
-	ADAPTER=$lan_adapter
+elif [ "$interface" = ethernets ]; then
+	adapter=$lan_adapter
 	up() {
 		echo_f
 		dhcp4_stat
@@ -180,7 +171,7 @@ case $option in
 	case $op in
 	[0-9])
 		p_ind="$(("$op" - 1))"
-		vars_memory=("${vars_memory[@]}" "POINT=${key_point[$p_ind]}" "PASS_POINT=${key_pass_point[$p_ind]}")
+		vars_memory=("${vars_memory[@]}" "point=${key_point[$p_ind]}" "pass_point=${key_pass_point[$p_ind]}")
 		"$this_config" "${vars_memory[@]}"
 		;;
 
@@ -209,7 +200,7 @@ case $option in
 
 			corr_num=$(("${#key_point[@]}" - 1))
 
-			vars_memory=("${vars_memory[@]}" "POINT=${key_point[$corr_num]}" "PASS_POINT=${key_pass_point[$corr_num]}")
+			vars_memory=("${vars_memory[@]}" "point=${key_point[$corr_num]}" "pass_point=${key_pass_point[$corr_num]}")
 			"$this_config" "${vars_memory[@]}"
 			;;
 		esac
@@ -228,10 +219,10 @@ case $option in
 "d")
 	echo -e "\u001b${GREEN} Setting up dhcp4...${RC}"
 
-	if [ "$DHCP4" = "true" ]; then
-		vars_memory=("${vars_memory[@]}" "DHCP4=no")
-	elif [ "$DHCP4" = "no" ]; then
-		vars_memory=("${vars_memory[@]}" "DHCP4=true")
+	if [ "$dhcp4" = "true" ]; then
+		vars_memory=("${vars_memory[@]}" "dhcp4=no")
+	elif [ "$dhcp4" = "no" ]; then
+		vars_memory=("${vars_memory[@]}" "dhcp4=true")
 	fi
 	"$this_config" "${vars_memory[@]}"
 
@@ -239,10 +230,10 @@ case $option in
 
 "i")
 	echo -e "\u001b${GREEN} Setting up interface...${RC}"
-	if [ "$INTERFACE" = "wifis" ]; then
-		vars_memory=("${vars_memory[@]}" "INTERFACE=ethernets")
-	elif [ "$INTERFACE" = "ethernets" ]; then
-		vars_memory=("${vars_memory[@]}" "INTERFACE=wifis")
+	if [ "$interface" = "wifis" ]; then
+		vars_memory=("${vars_memory[@]}" "interface=ethernets")
+	elif [ "$interface" = "ethernets" ]; then
+		vars_memory=("${vars_memory[@]}" "interface=wifis")
 	fi
 	"$this_config" "${vars_memory[@]}"
 	;;
