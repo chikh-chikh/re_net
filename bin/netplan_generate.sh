@@ -139,7 +139,7 @@ case $option in
 	# fi
 	up >"$net_file"
 	netplan apply
-	sleep 1
+	sleep 3
 	whatsmyip
 	;;
 
