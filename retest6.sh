@@ -70,6 +70,12 @@ for a in "$@"; do
 	eval "$a"
 done
 
+if [ "$interface" = wifis ]; then
+	adapter=$radio_adapter
+elif [ "$interface" = ethernets ]; then
+	adapter=$lan_adapter
+fi
+
 dhcp4_addresses=[192.168."$var_router"."$local_ip"/24]
 routes_via=192.168."$var_router".1
 nameserv_addr=[8.8.8.8,8.8.4.4]
@@ -98,7 +104,6 @@ dhcp4_stat() {
 }
 
 if [ "$interface" = wifis ]; then
-	adapter=$radio_adapter
 	if [ "$dhcp4" = true ]; then
 		up() {
 			echo_f
@@ -112,7 +117,6 @@ if [ "$interface" = wifis ]; then
 		}
 	fi
 elif [ "$interface" = ethernets ]; then
-	adapter=$lan_adapter
 	up() {
 		echo_f
 		dhcp4_stat
@@ -233,13 +237,12 @@ case $option in
 "p")
 	sum="${#local_ip_list[@]}"
 	sum_ind=$(("$sum" - 1))
-	for ip_ind in "${!local_ip_list[@]}"; do
-		[[ "${local_ip_list[$ip_ind]}" = "$local_ip" ]] && break
+	for i in "${!local_ip_list[@]}"; do
+		[[ "${local_ip_list[$i]}" = "$local_ip" ]] && break
 	done
-	# ip_ind="$i"
+	ip_ind="$i"
 	if [[ "$ip_ind" -lt "$sum_ind" ]]; then
 		ip_ind=$(("$ip_ind" + 1))
-		echo -e "ip_n_c $ip_ind"
 		vars_memory=("${vars_memory[@]}" "local_ip=${local_ip_list[$ip_ind]}")
 	else
 		ip_ind=0
