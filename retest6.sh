@@ -6,28 +6,27 @@ net_dir=$(pwd)
 net_file="$net_dir"/01-config.yaml
 this_dir_path="$(dirname "$(realpath "$0")")"
 this_config="$(readlink -f "$0")"
-vars_file="$this_dir_path/set_vars.sh"
 keys_file="$keysdir/netkeys.sh"
 
-black='\u001b[30;1m'
+# black='\u001b[30;1m'
 red='\u001b[31;1m'
 green='\u001b[32;1m'
 yellow='\u001b[33;1m'
 blue='\u001b[34;1m'
 magenta='\u001b[35;1m'
-cyan='\u001b[36;1m'
-white='\u001b[37;1m'
-background_black='\u001b[40;1m'
-background_red='\u001b[41;1m'
-background_green='\u001b[42;1m'
-background_Yellow='\u001b[43;1m'
-background_blue='\u001b[44;1m'
-background_magenta='\u001b[45;1m'
-background_cyan='\u001b[46;1m'
-background_white='\u001b[47;1m'
+# cyan='\u001b[36;1m'
+# white='\u001b[37;1m'
+# background_black='\u001b[40;1m'
+# background_red='\u001b[41;1m'
+# background_green='\u001b[42;1m'
+# background_Yellow='\u001b[43;1m'
+# background_blue='\u001b[44;1m'
+# background_magenta='\u001b[45;1m'
+# background_cyan='\u001b[46;1m'
+# background_white='\u001b[47;1m'
 
-bold='\u001b[1m'
-underline='\u001b[4m'
+# bold='\u001b[1m'
+# underline='\u001b[4m'
 reversed='\u001b[7m'
 rc='\u001b[0m'
 
@@ -35,7 +34,7 @@ command source "$this_dir_path"/bin/check_adapters.sh
 
 if [ -f "$keys_file" ]; then
 	command source "$keys_file"
-	echo -e "${yellow}You have a "${#points[@]}" wi-fi keys ${rc}"
+	echo -e "${yellow} You have a ${#points[@]} wi-fi keys ${rc}"
 else
 	keysdir="$HOME/.keysdir"
 	echo "${yellow} keys file not found, creating him in $keysdir ${rc}"
@@ -134,6 +133,7 @@ echo -e "${blue} (y) confirm ${rc}"
 echo -e "${blue} (a) any points ${rc}"
 echo -e "${blue} (d) change dhcp ${rc}"
 echo -e "${blue} (i) change interface ${rc}"
+echo -e "${blue} (p) change local ip ${rc}"
 echo -e "${red} (x) Anything else to exit ${rc}"
 echo -en "${green} ==> ${rc}"
 
@@ -230,12 +230,35 @@ case $option in
 	fi
 	"$this_config" "${vars_memory[@]}"
 	;;
+"p")
+	sum="${#local_ip_list[@]}"
+	sum_ind=$(("$sum" - 1))
+	for ip_ind in "${!local_ip_list[@]}"; do
+		[[ "${local_ip_list[$ip_ind]}" = "$local_ip" ]] && break
+	done
+	# ip_ind="$i"
+	if [[ "$ip_ind" -lt "$sum_ind" ]]; then
+		ip_ind=$(("$ip_ind" + 1))
+		echo -e "ip_n_c $ip_ind"
+		vars_memory=("${vars_memory[@]}" "local_ip=${local_ip_list[$ip_ind]}")
+	else
+		ip_ind=0
+		vars_memory=("${vars_memory[@]}" "local_ip=${local_ip_list[$ip_ind]}")
+	fi
+	"$this_config" "${vars_memory[@]}"
+	;;
 
 x)
 	echo -e "${green} invalid option entered, bye! ${rc}"
 	exit 0
 	;;
 esac
+
+# idx=0
+# for p in "${local_ip_list[@]}"; do
+# 	vars_memory=("${vars_memory[@]}" "local_ip=${local_ip_list[idx]}")
+# 	idx="$(("$idx" + 1))"
+# done
 
 # exit 0
 
