@@ -35,14 +35,14 @@ command source "$this_dir_path"/bin/check_adapters.sh
 
 if [ -f "$keys_file" ]; then
 	command source "$keys_file"
-	echo -e "You have a "${#points[@]}" wi-fi keys"
+	echo -e "${yellow}You have a "${#points[@]}" wi-fi keys ${rc}"
 else
 	keysdir="$HOME/.keysdir"
-	echo "keys file not found, creating him in $keysdir"
+	echo "${yellow} keys file not found, creating him in $keysdir ${rc}"
 	mkdir -p "$keysdir"
 	echo -e '#!/bin/bash \ndeclare -A points' >"$keys_file"
 	command source "$keys_file"
-	echo -e "You have a ${#points[@]} wi-fi keys"
+	echo -e "${yellow} You have a ${#points[@]} wi-fi keys ${rc}"
 fi
 
 key_point=("${!points[@]}")
@@ -77,25 +77,25 @@ nameserv_addr=[8.8.8.8,8.8.4.4]
 # nameserv_addr=[192.168."${var_router}".1,8.8.8.8]
 
 echo_f() {
-	echo "network:                               "
-	echo "  version: 2                           "
-	echo "  renderer: $renderer                  "
-	echo "  $interface:                          "
-	echo "    $adapter:                          "
+	echo "network:"
+	echo "  version: 2"
+	echo "  renderer: $renderer"
+	echo "  $interface:"
+	echo "    $adapter:"
 }
 wifi_dhcp() {
-	echo "      access-points:                   "
-	echo "        $point:                        "
-	echo "          password: $pass_point        "
-	echo "      dhcp4: $dhcp4                    "
+	echo "      access-points:"
+	echo "        $point:"
+	echo "          password: $pass_point"
+	echo "      dhcp4: $dhcp4"
 }
 dhcp4_stat() {
-	echo "      addresses: $dhcp4_addresses      "
-	echo "      routes:                          "
-	echo "      - to: default                    "
-	echo "        via: $routes_via               "
-	echo "      nameservers:                     "
-	echo "        addresses: $nameserv_addr      "
+	echo "      addresses: $dhcp4_addresses"
+	echo "      routes:"
+	echo "      - to: default"
+	echo "        via: $routes_via"
+	echo "      nameservers:"
+	echo "        addresses: $nameserv_addr"
 }
 
 if [ "$interface" = wifis ]; then
@@ -128,7 +128,7 @@ function whatsmyip() {
 }
 
 # Menu TUI
-echo -e "${magenta} Setting up netplan...${rc}"
+echo -e "${magenta}${reversed} setting up netplan ${rc}"
 echo -e "$(up)"
 echo -e "${blue} (y) confirm ${rc}"
 echo -e "${blue} (a) any points ${rc}"
@@ -143,36 +143,23 @@ case $option in
 	# rm -rf "$net_dir"/01-*.yaml
 	# if [ ! -f "$net_file" ]; then
 	# 	touch "$net_file"
-	# 	chmod 660 "$net_file"
+	# 	chmod 600 "$net_file"
 	# fi
 	up >"$net_file"
 	# netplan apply
-	sleep 1
-	whatsmyip
-	echo -e "${green} complete${rc}"
-	echo -e "${red} Press y for remove $vars_file"
-	echo -en "${green} ==> ${rc}"
-	read -r nn
-	case "$nn" in
-	y)
-		rm -f "$vars_file"
-		exit
-		;;
-	n)
-		exit
-		;;
-	esac
+	# sleep 1
+	# whatsmyip
 	;;
 
 "a")
-	echo -e "${green} Setting up point...${rc}"
+	echo -e "${magenta} setting up point ${rc}"
 	count=0
 	for p in "${key_point[@]}"; do
 		count="$(("$count" + 1))"
-		echo -e "${blue} Press $count for $p connecting ${rc} "
+		echo -e "${blue} ($count) - $p ${rc} "
 	done
-	echo -e "${blue} Press s for scan wi-fi points ${rc} "
-	echo -e "${red} (x) Anything else to exit ${rc}"
+	echo -e "${blue} (s) - scan wi-fi points ${rc} "
+	echo -e "${red} (x) - exit ${rc}"
 	echo -en "${green} ==> ${rc}"
 
 	read -r op
@@ -184,22 +171,24 @@ case $option in
 		;;
 
 	"s")
-		echo "scan wi-fi point"
+		echo -e "${magenta} scan wi-fi point ${rc}"
 		arr_pnt=()
 		cnt=0
 		list_pnts=$("$this_dir_path"/bin/wifi_list.sh)
 		for ps in $list_pnts; do
 			arr_pnt+=("$ps")
 			cnt="$(("$cnt" + 1))"
-			echo -e "${blue} Press $cnt for $ps connecting ${rc} "
+			echo -e "${blue} ($cnt) - $ps ${rc} "
 		done
+		echo -e "${red} (x) exit ${rc}"
+		echo -en "${green} ==> ${rc}"
 
 		read -r pnt
 		case $pnt in
 		*[0-9]*)
 			num=$(("$pnt" - 1))
 			pname=${arr_pnt[$num]}
-			echo -n "Enter the password for $pname: "
+			echo -n "enter the password for $pname: "
 			read -r pn_pass
 			echo -e "points[$pname]=$pn_pass" >>"$keysdir/netkeys.sh"
 
@@ -213,7 +202,7 @@ case $option in
 			;;
 		esac
 
-		echo -e "${red} (x) Anything else to exit ${rc}"
+		echo -e "${red} (x) exit ${rc}"
 		echo -en "${green} ==> ${rc}"
 		;;
 
@@ -225,19 +214,15 @@ case $option in
 	;;
 
 "d")
-	echo -e "${green} Setting up dhcp4...${rc}"
-
 	if [ "$dhcp4" = "true" ]; then
 		vars_memory=("${vars_memory[@]}" "dhcp4=no")
 	elif [ "$dhcp4" = "no" ]; then
 		vars_memory=("${vars_memory[@]}" "dhcp4=true")
 	fi
 	"$this_config" "${vars_memory[@]}"
-
 	;;
 
 "i")
-	echo -e "${green} Setting up interface...${rc}"
 	if [ "$interface" = "wifis" ]; then
 		vars_memory=("${vars_memory[@]}" "interface=ethernets")
 	elif [ "$interface" = "ethernets" ]; then
@@ -247,7 +232,7 @@ case $option in
 	;;
 
 x)
-	echo -e "${green} Invalid option entered, Bye! ${rc}"
+	echo -e "${green} invalid option entered, bye! ${rc}"
 	exit 0
 	;;
 esac
