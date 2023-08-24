@@ -7,6 +7,7 @@ net_file="$net_dir"/01-config.yaml
 this_dir_path="$(dirname "$(realpath "$0")")"
 this_config="$(readlink -f "$0")"
 keys_file="$keysdir/netkeys.sh"
+vars_file="$this_dir_path/set_vars.sh"
 
 # black='\u001b[30;1m'
 red='\u001b[31;1m'
@@ -65,6 +66,10 @@ var_router2=${var_router2_list[0]}
 point=${key_point[0]}
 pass_point=${key_pass_point[0]}
 local_ip=${local_ip_list[0]}
+
+if [ -f "$vars_file" ]; then
+	command source "$vars_file"
+fi
 
 vars_memory=()
 for a in "$@"; do
@@ -157,6 +162,22 @@ case $option in
 	# netplan apply
 	# sleep 1
 	# whatsmyip
+	echo -e "${blue}saved variables at file ?${rc}"
+	echo -e "${blue}(y) - save at $vars_file ${rc}"
+	echo -e "${blue}(n) - no ${rc}"
+
+	read -r save
+	case $save in
+	"y")
+		echo -e '#!/bin/bash' >"$vars_file"
+		for v in "${vars_memory[@]}"; do
+			echo -e "$v" >>"$vars_file"
+		done
+		;;
+	"n")
+		exit
+		;;
+	esac
 	;;
 
 "a")
