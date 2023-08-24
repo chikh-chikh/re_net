@@ -52,14 +52,16 @@ renderer_list=("NetworkManager" "networkd")
 interface_list=("wifis" "ethernets")
 adapter_list=("$radio_adapter" "$lan_adapter")
 dhcp4_list=("true" "no")
-var_routes_list=("1" "0")
+var_router_list=("1" "0" "10")
+var_router2_list=("192.168" "172.210")
 local_ip_list=("27" "9" "10" "12")
 
 renderer=${renderer_list[0]}
 interface=${interface_list[0]}
 adapter=${adapter_list[0]}
 dhcp4=${dhcp4_list[0]}
-var_router=${var_routes_list[0]}
+var_router=${var_router_list[0]}
+var_router2=${var_router2_list[0]}
 point=${key_point[0]}
 pass_point=${key_pass_point[0]}
 local_ip=${local_ip_list[0]}
@@ -76,8 +78,8 @@ elif [ "$interface" = ethernets ]; then
 	adapter=$lan_adapter
 fi
 
-dhcp4_addresses=[192.168."$var_router"."$local_ip"/24]
-routes_via=192.168."$var_router".1
+dhcp4_addresses=["$var_router2"."$var_router"."$local_ip"/24]
+routes_via="$var_router2"."$var_router".1
 nameserv_addr=[8.8.8.8,8.8.4.4]
 # nameserv_addr=[192.168."${var_router}".1,8.8.8.8]
 
@@ -138,6 +140,8 @@ echo -e "${blue} (a) any points ${rc}"
 echo -e "${blue} (d) change dhcp ${rc}"
 echo -e "${blue} (i) change interface ${rc}"
 echo -e "${blue} (p) change local ip ${rc}"
+echo -e "${blue} (v) change router specific 0/1/10 ${rc}"
+echo -e "${blue} (v2) change router specific 192.168/172.210 ${rc}"
 echo -e "${red} (x) Anything else to exit ${rc}"
 echo -en "${green} ==> ${rc}"
 
@@ -234,6 +238,7 @@ case $option in
 	fi
 	"$this_config" "${vars_memory[@]}"
 	;;
+
 "p")
 	sum="${#local_ip_list[@]}"
 	sum_ind=$(("$sum" - 1))
@@ -251,6 +256,39 @@ case $option in
 	"$this_config" "${vars_memory[@]}"
 	;;
 
+"v")
+	sum="${#var_router_list[@]}"
+	sum_ind=$(("$sum" - 1))
+	for i in "${!var_router_list[@]}"; do
+		[[ "${var_router_list[$i]}" = "$var_router" ]] && break
+	done
+	var_ind="$i"
+	if [[ "$var_ind" -lt "$sum_ind" ]]; then
+		var_ind=$(("$var_ind" + 1))
+		vars_memory=("${vars_memory[@]}" "var_router=${var_router_list[$var_ind]}")
+	else
+		var_ind=0
+		vars_memory=("${vars_memory[@]}" "var_router=${var_router_list[$var_ind]}")
+	fi
+	"$this_config" "${vars_memory[@]}"
+	;;
+
+"v2")
+	sum="${#var_router2_list[@]}"
+	sum_ind=$(("$sum" - 1))
+	for i in "${!var_router2_list[@]}"; do
+		[[ "${var_router2_list[$i]}" = "$var_router2" ]] && break
+	done
+	var2_ind="$i"
+	if [[ "$var2_ind" -lt "$sum_ind" ]]; then
+		var2_ind=$(("$var2_ind" + 1))
+		vars_memory=("${vars_memory[@]}" "var_router2=${var_router2_list[$var2_ind]}")
+	else
+		var2_ind=0
+		vars_memory=("${vars_memory[@]}" "var_router2=${var_router2_list[$var2_ind]}")
+	fi
+	"$this_config" "${vars_memory[@]}"
+	;;
 x)
 	echo -e "${green} invalid option entered, bye! ${rc}"
 	exit 0
