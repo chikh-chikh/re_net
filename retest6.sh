@@ -53,7 +53,7 @@ interface_list=("wifis" "ethernets")
 adapter_list=("$radio_adapter" "$lan_adapter")
 dhcp4_list=("true" "no")
 var_router_list=("1" "0" "10")
-var_router2_list=("192.168" "172.210")
+var_router2_list=("192.168" "172.20")
 local_ip_list=("27" "9" "10" "12")
 
 renderer=${renderer_list[0]}
