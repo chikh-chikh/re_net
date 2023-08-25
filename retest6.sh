@@ -56,7 +56,7 @@ dhcp4_list=("true" "no")
 var_router_list=("1" "0" "10")
 var_router2_list=("192.168" "172.20")
 local_ip_list=("27" "9" "10" "12")
-common_list=("no" "wifis" "ethernets")
+common_list=("wifis" "wifis" "wifis")
 
 renderer=${renderer_list[0]}
 interface=${interface_list[0]}
@@ -75,6 +75,7 @@ fi
 
 vars_memory=()
 for a in "$@"; do
+	echo -e "aaaaaaaaa $a"
 	vars_memory=("${vars_memory[@]}" "$a")
 	eval "$a"
 done
@@ -116,18 +117,16 @@ dhcp4_stat() {
 	echo "        addresses: $nameserv_addr"
 }
 
-if [ "$common" != "no" ]; then
-	interfaces=("ethernets" "wifis")
-	adapters=("$lan_adapter" "$radio_adapter")
-	echo -e "echo_f"
-	for i in "${interfaces[@]}"; do
-		interface=$i
-		echo -e "interface"
-		echo -e "adapters"
-	done
-
-# elif [ "$common" = "ethernets"]; then
-fi
+# if [ "$common" != "no" ]; then
+# 	interfaces=("ethernets" "wifis")
+# 	adapters=("$lan_adapter" "$radio_adapter")
+# 	for i in "${interfaces[@]}"; do
+# 		interface=$i
+# 		echo -e "interface"
+# 		echo -e "adapters"
+# 	done
+# # elif [ "$common" = "ethernets"]; then
+# fi
 
 if [ "$interface" = wifis ]; then
 	if [ "$dhcp4" = true ]; then
@@ -154,16 +153,19 @@ elif [ "$interface" = ethernets ]; then
 		dhcp4_stat
 	}
 fi
-if [ "$common" != "no" ]; then
+if [ "$common" = "wifis" ]; then
 	up() {
 		echo_f
-		for i in "${interfaces[@]}"; do
-			interface=$i
-			interface
-			adapter
+		interface
+		adapter
+		for i in "${pts[@]}"; do
+			for a in "${key_point[@]}"; do
+				[[ "$i" = "$a" ]] && break
+			done
+			point="$a"
+			pass_point="${points[$a]}"
+			wifi_dhcp
 		done
-		dhcp4_stat
-		wifi_dhcp
 	}
 fi
 
@@ -361,14 +363,36 @@ case $option in
 		common_ind=$(("$common_ind" + 1))
 
 		if [ "$common" != "no" ]; then
-			for i in "${interfaces[@]}"; do
-				interface="${interfaces[$common_ind]}"
-				exec
-			done
-		# elif [ "$common" = "ethernets"]; then
+			if [ "$common" = "wifis" ]; then
+				interface="wifis"
+				for i in "${!points[@]}"; do
+					echo -e "add $i in config"
+				done
+				read -r c
+				case $c in
+				"$c")
+					p_ind="$(("$c" - 1))"
+					p="${key_point[$p_ind]}"
+					pts=("$point" "$p")
+
+					# count=1
+					# for i in "${!pts[@]}"; do
+					# 	"${pts[$i]}"
+					# 	count="$(("$count" + 1))"
+					# done
+
+					# echo -e "$i ${pts[$i]}"
+					echo -e "eeee ${pts[*]}"
+					;;
+				esac
+			# elif [ "$common" = "ethernets" ]; then
+			# 	for i in "${interfaces[@]}"; do
+			# 		interface="${interfaces[$common_ind]}"
+			# 	done
+			fi
 		fi
 
-		vars_memory=("${vars_memory[@]}" "common=${common_list[$common_ind]}")
+		vars_memory=("${vars_memory[@]}" "common=${common_list[$common_ind]}" "pts=(${pts[*]})")
 	else
 		common_ind=0
 		vars_memory=("${vars_memory[@]}" "common=${common_list[$common_ind]}")
