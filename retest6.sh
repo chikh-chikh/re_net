@@ -56,6 +56,7 @@ dhcp4_list=("true" "no")
 var_router_list=("1" "0" "10")
 var_router2_list=("192.168" "172.20")
 local_ip_list=("27" "9" "10" "12")
+common_list=("no" "wifis" "ethernets")
 
 renderer=${renderer_list[0]}
 interface=${interface_list[0]}
@@ -66,6 +67,7 @@ var_router2=${var_router2_list[0]}
 point=${key_point[0]}
 pass_point=${key_pass_point[0]}
 local_ip=${local_ip_list[0]}
+common=${common_list[0]}
 
 if [ -f "$vars_file" ]; then
 	command source "$vars_file"
@@ -92,7 +94,11 @@ echo_f() {
 	echo "network:"
 	echo "  version: 2"
 	echo "  renderer: $renderer"
+}
+interface() {
 	echo "  $interface:"
+}
+adapter() {
 	echo "    $adapter:"
 }
 wifi_dhcp() {
@@ -110,15 +116,32 @@ dhcp4_stat() {
 	echo "        addresses: $nameserv_addr"
 }
 
+if [ "$common" != "no" ]; then
+	interfaces=("ethernets" "wifis")
+	adapters=("$lan_adapter" "$radio_adapter")
+	echo -e "echo_f"
+	for i in "${interfaces[@]}"; do
+		interface=$i
+		echo -e "interface"
+		echo -e "adapters"
+	done
+
+# elif [ "$common" = "ethernets"]; then
+fi
+
 if [ "$interface" = wifis ]; then
 	if [ "$dhcp4" = true ]; then
 		up() {
 			echo_f
+			interface
+			adapter
 			wifi_dhcp
 		}
 	elif [ "$dhcp4" = no ]; then
 		up() {
 			echo_f
+			interface
+			adapter
 			wifi_dhcp
 			dhcp4_stat
 		}
@@ -126,7 +149,21 @@ if [ "$interface" = wifis ]; then
 elif [ "$interface" = ethernets ]; then
 	up() {
 		echo_f
+		interface
+		adapter
 		dhcp4_stat
+	}
+fi
+if [ "$common" != "no" ]; then
+	up() {
+		echo_f
+		for i in "${interfaces[@]}"; do
+			interface=$i
+			interface
+			adapter
+		done
+		dhcp4_stat
+		wifi_dhcp
 	}
 fi
 
@@ -147,6 +184,7 @@ echo -e "${blue} (i) change interface ${rc}"
 echo -e "${blue} (p) change local ip ${rc}"
 echo -e "${blue} (v) change router specific 0/1/10 ${rc}"
 echo -e "${blue} (v2) change router specific 192.168/172.210 ${rc}"
+echo -e "${blue} (c) common change ${rc}"
 echo -e "${red} (x) Anything else to exit ${rc}"
 echo -en "${green} ==> ${rc}"
 
@@ -310,6 +348,36 @@ case $option in
 	fi
 	"$this_config" "${vars_memory[@]}"
 	;;
+"c")
+	sum="${#common_list[@]}"
+	sum_ind=$(("$sum" - 1))
+
+	for i in "${!common_list[@]}"; do
+		[[ "${common_list[$i]}" = "$common" ]] && break
+	done
+	common_ind="$i"
+
+	if [[ "$common_ind" -lt "$sum_ind" ]]; then
+		common_ind=$(("$common_ind" + 1))
+
+		if [ "$common" != "no" ]; then
+			for i in "${interfaces[@]}"; do
+				interface="${interfaces[$common_ind]}"
+				exec
+			done
+		# elif [ "$common" = "ethernets"]; then
+		fi
+
+		vars_memory=("${vars_memory[@]}" "common=${common_list[$common_ind]}")
+	else
+		common_ind=0
+		vars_memory=("${vars_memory[@]}" "common=${common_list[$common_ind]}")
+	fi
+
+	"$this_config" "${vars_memory[@]}"
+
+	;;
+
 x)
 	echo -e "${green} invalid option entered, bye! ${rc}"
 	exit 0
