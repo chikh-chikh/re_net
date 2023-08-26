@@ -397,7 +397,7 @@ case $option in
 	# 	[[ "${common_list[$i]}" = "$common" ]] && break
 	# done
 	# common_ind="$i"
-	#
+
 	echo -e "${magenta} setting up common ${rc}"
 	count=0
 	for p in "${common_list[@]}"; do
@@ -409,33 +409,29 @@ case $option in
 
 	read -r op
 	case $op in
-	"1")
-		common=no
-		;;
-	"2")
-		common=wifis
-		for i in "${!points[@]}"; do
-			echo -e "add $i in config"
-		done
-		read -r c
-		case $c in
-		"$c")
-			p_ind="$(("$c" - 1))"
-			p="${key_point[$p_ind]}"
-			pts=("${pts[@]}" "$p")
-			;;
-		esac
-		;;
 
-	"3")
-		common=ethernets
+	"$op")
+		c_ind="$(("$op" - 1))"
+		common="${common_list[$c_ind]}"
+		if [ "$common" = "wifis" ]; then
+			count=0
+			for i in "${!points[@]}"; do
+				count="$(("$count" + 1))"
+				echo -e "${blue} ($count) - add $i"
+			done
+			echo -en "${green} ==> ${rc}"
+
+			read -r c
+			case $c in
+			"$c")
+				p_ind="$(("$c" - 1))"
+				p="${key_point[$p_ind]}"
+				pts=("${pts[@]}" "$p")
+				# exec
+				;;
+			esac
+		fi
 		;;
-
-	"4")
-		common=all
-
-		;;
-
 	esac
 
 	# if [[ "$common_ind" -lt "$sum_ind" ]]; then
@@ -443,8 +439,6 @@ case $option in
 	# else
 	# 	common_ind=0
 	# fi
-	#
-	# vars_memory=("${vars_memory[@]}" "common=$common" "pts=(${pts[*]})")
 	vars_memory=("${vars_memory[@]}" "common=$common" "pts=(${pts[*]})")
 
 	"$this_config" "${vars_memory[@]}"
