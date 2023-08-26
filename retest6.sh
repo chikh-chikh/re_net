@@ -56,7 +56,7 @@ dhcp4_list=("true" "no")
 var_router_list=("1" "0" "10")
 var_router2_list=("192.168" "172.20")
 local_ip_list=("27" "9" "10" "12")
-common_list=("wifis" "wifis" "wifis")
+common_list=("no" "wifis" "ethernets")
 
 renderer=${renderer_list[0]}
 interface=${interface_list[0]}
@@ -102,10 +102,14 @@ interface() {
 adapter() {
 	echo "    $adapter:"
 }
-wifi_dhcp() {
+access-points() {
 	echo "      access-points:"
+}
+wifi_point() {
 	echo "        $point:"
 	echo "          password: $pass_point"
+}
+dhcp_status() {
 	echo "      dhcp4: $dhcp4"
 }
 dhcp4_stat() {
@@ -134,14 +138,18 @@ if [ "$interface" = wifis ]; then
 			echo_f
 			interface
 			adapter
-			wifi_dhcp
+			access-points
+			wifi_point
+			dhcp_status
 		}
 	elif [ "$dhcp4" = no ]; then
 		up() {
 			echo_f
 			interface
 			adapter
-			wifi_dhcp
+			access-points
+			wifi_point
+			dhcp_status
 			dhcp4_stat
 		}
 	fi
@@ -158,14 +166,16 @@ if [ "$common" = "wifis" ]; then
 		echo_f
 		interface
 		adapter
+		access-points
 		for i in "${pts[@]}"; do
 			for a in "${key_point[@]}"; do
 				[[ "$i" = "$a" ]] && break
 			done
 			point="$a"
 			pass_point="${points[$a]}"
-			wifi_dhcp
+			wifi_point
 		done
+		dhcp_status
 	}
 fi
 
@@ -350,53 +360,57 @@ case $option in
 	fi
 	"$this_config" "${vars_memory[@]}"
 	;;
+
 "c")
-	sum="${#common_list[@]}"
-	sum_ind=$(("$sum" - 1))
+	# sum="${#common_list[@]}"
+	# sum_ind=$(("$sum" - 1))
 
 	for i in "${!common_list[@]}"; do
 		[[ "${common_list[$i]}" = "$common" ]] && break
 	done
 	common_ind="$i"
 
-	if [[ "$common_ind" -lt "$sum_ind" ]]; then
-		common_ind=$(("$common_ind" + 1))
+	echo -e "${magenta} setting up common ${rc}"
+	count=0
+	for p in "${common_list[@]}"; do
+		count="$(("$count" + 1))"
+		echo -e "${blue} ($count) - $p ${rc} "
+	done
+	echo -e "${red} (x) - exit ${rc}"
+	echo -en "${green} ==> ${rc}"
 
-		if [ "$common" != "no" ]; then
-			if [ "$common" = "wifis" ]; then
-				interface="wifis"
-				for i in "${!points[@]}"; do
-					echo -e "add $i in config"
-				done
-				read -r c
-				case $c in
-				"$c")
-					p_ind="$(("$c" - 1))"
-					p="${key_point[$p_ind]}"
-					pts=("$point" "$p")
+	read -r op
+	case $op in
+	"1")
+		common=no
+		;;
+	"2")
+		common=wifis
+		for i in "${!points[@]}"; do
+			echo -e "add $i in config"
+		done
+		read -r c
+		case $c in
+		"$c")
+			p_ind="$(("$c" - 1))"
+			p="${key_point[$p_ind]}"
+			pts=("$point" "$p")
+			;;
+		esac
+		;;
+	# "3")
+	#    common=ethernets
+	#    ;;
 
-					# count=1
-					# for i in "${!pts[@]}"; do
-					# 	"${pts[$i]}"
-					# 	count="$(("$count" + 1))"
-					# done
+	esac
 
-					# echo -e "$i ${pts[$i]}"
-					echo -e "eeee ${pts[*]}"
-					;;
-				esac
-			# elif [ "$common" = "ethernets" ]; then
-			# 	for i in "${interfaces[@]}"; do
-			# 		interface="${interfaces[$common_ind]}"
-			# 	done
-			fi
-		fi
-
-		vars_memory=("${vars_memory[@]}" "common=${common_list[$common_ind]}" "pts=(${pts[*]})")
-	else
-		common_ind=0
-		vars_memory=("${vars_memory[@]}" "common=${common_list[$common_ind]}")
-	fi
+	# if [[ "$common_ind" -lt "$sum_ind" ]]; then
+	# 	common_ind=$(("$common_ind" + 1))
+	# else
+	# 	common_ind=0
+	# fi
+	#
+	vars_memory=("${vars_memory[@]}" "common=${common_list[$common_ind]}" "pts=(${pts[*]})")
 
 	"$this_config" "${vars_memory[@]}"
 
