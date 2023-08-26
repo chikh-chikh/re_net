@@ -50,16 +50,16 @@ key_pass_point=("${points[@]}")
 # echo -e "${key_point[@]}"
 # echo -e "${key_pass_point[@]}"
 renderer_list=("NetworkManager" "networkd")
-interface_list=("wifis" "ethernets")
+interface_list=("ethernets" "wifis")
 adapter_list=("$radio_adapter" "$lan_adapter")
 dhcp4_list=("true" "no")
 var_router_list=("1" "0" "10")
 var_router2_list=("192.168" "172.20")
 local_ip_list=("27" "9" "10" "12")
-common_list=("no" "wifis" "ethernets")
+common_list=("no" "wifis" "ethernets" "all")
 
 renderer=${renderer_list[0]}
-interface=${interface_list[0]}
+interface=${interface_list[1]}
 adapter=${adapter_list[0]}
 dhcp4=${dhcp4_list[0]}
 var_router=${var_router_list[0]}
@@ -75,7 +75,6 @@ fi
 
 vars_memory=()
 for a in "$@"; do
-	echo -e "aaaaaaaaa $a"
 	vars_memory=("${vars_memory[@]}" "$a")
 	eval "$a"
 done
@@ -121,17 +120,6 @@ dhcp4_stat() {
 	echo "        addresses: $nameserv_addr"
 }
 
-# if [ "$common" != "no" ]; then
-# 	interfaces=("ethernets" "wifis")
-# 	adapters=("$lan_adapter" "$radio_adapter")
-# 	for i in "${interfaces[@]}"; do
-# 		interface=$i
-# 		echo -e "interface"
-# 		echo -e "adapters"
-# 	done
-# # elif [ "$common" = "ethernets"]; then
-# fi
-
 if [ "$interface" = wifis ]; then
 	if [ "$dhcp4" = true ]; then
 		up() {
@@ -161,22 +149,48 @@ elif [ "$interface" = ethernets ]; then
 		dhcp4_stat
 	}
 fi
-if [ "$common" = "wifis" ]; then
-	up() {
-		echo_f
-		interface
-		adapter
-		access-points
-		for i in "${pts[@]}"; do
-			for a in "${key_point[@]}"; do
-				[[ "$i" = "$a" ]] && break
+
+if [ "$common" != "no" ]; then
+	if [ "$common" = "wifis" ]; then
+		up() {
+			echo_f
+			interface
+			adapter
+			access-points
+			for i in "${pts[@]}"; do
+				for a in "${key_point[@]}"; do
+					[[ "$i" = "$a" ]] && break
+				done
+				point="$a"
+				pass_point="${points[$a]}"
+				wifi_point
 			done
-			point="$a"
-			pass_point="${points[$a]}"
-			wifi_point
-		done
-		dhcp_status
-	}
+			dhcp_status
+		}
+	elif [ "$common" = "all" ]; then
+		up() {
+			echo_f
+			for i in "${interface_list[@]}"; do
+				interface=$i
+
+				if [ "$interface" = ethernets ]; then
+					adapter=$lan_adapter
+					interface
+					adapter
+					dhcp4_stat
+				elif [ "$interface" = wifis ]; then
+					adapter=$radio_adapter
+					interface
+					adapter
+					access-points
+					wifi_point
+					dhcp_status
+				fi
+			done
+		}
+
+		# elif [ "$common" = "ethernets"]; then
+	fi
 fi
 
 function whatsmyip() {
@@ -365,11 +379,11 @@ case $option in
 	# sum="${#common_list[@]}"
 	# sum_ind=$(("$sum" - 1))
 
-	for i in "${!common_list[@]}"; do
-		[[ "${common_list[$i]}" = "$common" ]] && break
-	done
-	common_ind="$i"
-
+	# for i in "${!common_list[@]}"; do
+	# 	[[ "${common_list[$i]}" = "$common" ]] && break
+	# done
+	# common_ind="$i"
+	#
 	echo -e "${magenta} setting up common ${rc}"
 	count=0
 	for p in "${common_list[@]}"; do
@@ -398,9 +412,15 @@ case $option in
 			;;
 		esac
 		;;
-	# "3")
-	#    common=ethernets
-	#    ;;
+
+	"3")
+		common=ethernets
+		;;
+
+	"4")
+		common=all
+
+		;;
 
 	esac
 
@@ -410,7 +430,8 @@ case $option in
 	# 	common_ind=0
 	# fi
 	#
-	vars_memory=("${vars_memory[@]}" "common=${common_list[$common_ind]}" "pts=(${pts[*]})")
+	# vars_memory=("${vars_memory[@]}" "common=$common" "pts=(${pts[*]})")
+	vars_memory=("${vars_memory[@]}" "common=$common" "pts=(${pts[*]})")
 
 	"$this_config" "${vars_memory[@]}"
 
