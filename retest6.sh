@@ -120,46 +120,49 @@ dhcp4_stat() {
 	echo "        addresses: $nameserv_addr"
 }
 
-if [ "$interface" = wifis ]; then
-	if [ "$dhcp4" = true ]; then
+if [ "$common" = "no" ]; then
+
+	if [ "$interface" = wifis ]; then
+		if [ "$dhcp4" = true ]; then
+			up() {
+				echo_f
+				interface
+				adapter
+				access-points
+				wifi_point
+				dhcp_status
+			}
+		elif [ "$dhcp4" = no ]; then
+			up() {
+				echo_f
+				interface
+				adapter
+				access-points
+				wifi_point
+				dhcp_status
+				dhcp4_stat
+			}
+		fi
+	elif [ "$interface" = ethernets ]; then
 		up() {
 			echo_f
 			interface
 			adapter
-			access-points
-			wifi_point
-			dhcp_status
-		}
-	elif [ "$dhcp4" = no ]; then
-		up() {
-			echo_f
-			interface
-			adapter
-			access-points
-			wifi_point
-			dhcp_status
 			dhcp4_stat
 		}
 	fi
-elif [ "$interface" = ethernets ]; then
-	up() {
-		echo_f
-		interface
-		adapter
-		dhcp4_stat
-	}
-fi
 
-if [ "$common" != "no" ]; then
+elif [ "$common" != "no" ]; then
+
 	if [ "$common" = "wifis" ]; then
 		up() {
 			echo_f
 			interface
 			adapter
 			access-points
-			for i in "${pts[@]}"; do
+			for p in "${pts[@]}"; do
 				for a in "${key_point[@]}"; do
-					[[ "$i" = "$a" ]] && break
+					[[ "$p" = "$a" ]] && break
 				done
 				point="$a"
 				pass_point="${points[$a]}"
@@ -167,6 +170,7 @@ if [ "$common" != "no" ]; then
 			done
 			dhcp_status
 		}
+
 	elif [ "$common" = "all" ]; then
 		up() {
 			echo_f
@@ -183,12 +187,22 @@ if [ "$common" != "no" ]; then
 					interface
 					adapter
 					access-points
-					wifi_point
 					dhcp_status
+					if [ "${#pts[@]}" != 0 ]; then
+						for p in "${pts[@]}"; do
+							for a in "${key_point[@]}"; do
+								[[ "$p" = "$a" ]] && break
+							done
+							point="$a"
+							pass_point="${points[$a]}"
+							wifi_point
+						done
+					else
+						wifi_point
+					fi
 				fi
 			done
 		}
-
 		# elif [ "$common" = "ethernets"]; then
 	fi
 fi
@@ -408,7 +422,7 @@ case $option in
 		"$c")
 			p_ind="$(("$c" - 1))"
 			p="${key_point[$p_ind]}"
-			pts=("$point" "$p")
+			pts=("${pts[@]}" "$p")
 			;;
 		esac
 		;;
