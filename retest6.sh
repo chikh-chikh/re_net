@@ -51,7 +51,7 @@ key_pass_point=("${points[@]}")
 # echo -e "${key_pass_point[@]}"
 renderer_list=("NetworkManager" "networkd")
 interface_list=("ethernets" "wifis")
-adapter_list=("$radio_adapter" "$lan_adapter")
+adapter_list=("$radio_adapter" "$lan_adapter" "eth0" "eth1")
 dhcp4_list=("true" "no")
 var_router_list=("1" "0" "10")
 var_router2_list=("192.168" "172.20")
@@ -171,17 +171,39 @@ elif [ "$common" != "no" ]; then
 			dhcp_status
 		}
 
+	elif [ "$common" = "ethernets" ]; then
+		up() {
+			interface=ethernets
+			echo_f
+			interface
+			for e in "${eth[@]}"; do
+				adapter="$e"
+				adapter
+				dhcp4_stat
+			done
+		}
+
 	elif [ "$common" = "all" ]; then
 		up() {
 			echo_f
 			for i in "${interface_list[@]}"; do
 				interface=$i
 
-				if [ "$interface" = ethernets ]; then
-					adapter=$lan_adapter
-					interface
-					adapter
-					dhcp4_stat
+				if [ "$interface" = "ethernets" ]; then
+					if [ "${#eth[@]}" != 0 ]; then
+						interface
+						for e in "${eth[@]}"; do
+							adapter="$e"
+							adapter
+							dhcp4_stat
+						done
+					else
+						adapter=$lan_adapter
+						interface
+						adapter
+						dhcp4_stat
+					fi
+
 				elif [ "$interface" = wifis ]; then
 					adapter=$radio_adapter
 					interface
@@ -203,7 +225,6 @@ elif [ "$common" != "no" ]; then
 				fi
 			done
 		}
-		# elif [ "$common" = "ethernets"]; then
 	fi
 fi
 
@@ -413,6 +434,7 @@ case $option in
 	"$op")
 		c_ind="$(("$op" - 1))"
 		common="${common_list[$c_ind]}"
+
 		if [ "$common" = "wifis" ]; then
 			count=0
 			for i in "${!points[@]}"; do
@@ -427,9 +449,29 @@ case $option in
 				p_ind="$(("$c" - 1))"
 				p="${key_point[$p_ind]}"
 				pts=("${pts[@]}" "$p")
+				;;
+			esac
+
+		elif
+			[ "$common" = "ethernets" ]
+		then
+			count=0
+			for a in "${adapter_list[@]}"; do
+				count="$(("$count" + 1))"
+				echo -e "${blue} ($count) - add $a"
+			done
+			echo -en "${green} ==> ${rc}"
+
+			read -r c
+			case $c in
+			"$c")
+				a_ind="$(("$c" - 1))"
+				a="${adapter_list[$a_ind]}"
+				eth=("${eth[@]}" "$a")
 				# exec
 				;;
 			esac
+
 		fi
 		;;
 	esac
@@ -439,7 +481,7 @@ case $option in
 	# else
 	# 	common_ind=0
 	# fi
-	vars_memory=("${vars_memory[@]}" "common=$common" "pts=(${pts[*]})")
+	vars_memory=("${vars_memory[@]}" "common=$common" "pts=(${pts[*]})" "eth=(${eth[*]})")
 
 	"$this_config" "${vars_memory[@]}"
 
