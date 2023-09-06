@@ -166,7 +166,7 @@ case $option in
 		echo -e "${magenta} scan wi-fi point ${rc}"
 		arr_pnt=()
 		cnt=0
-		list_pnts=$("$this_dir_path"/bin/wifi_list.sh)
+		list_pnts=$("$this_dir_path"/wifi_list.sh)
 		for ps in $list_pnts; do
 			arr_pnt+=("$ps")
 			cnt="$(("$cnt" + 1))"
