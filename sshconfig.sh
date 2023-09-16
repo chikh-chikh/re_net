@@ -29,30 +29,20 @@ fi
 # }
 
 host_list=("${!host[@]}")
-# in_on_host=("${host[@]}")
-
-# declare -A default
-# dafault[host]=""
-# dafault[host_name]=""
-# dafault[port]="22"
-# dafault[identity_file]="$HOME/.ssh/dafault"
-# dafault[identities_only]="yes"
-# dafault[user]="ru"
 
 send_f() {
-	echo " Host vps"
-	echo "   HostName "
-	echo "   Port 22"
-	echo "   IdentityFile "
-	echo "   IdentitiesOnly yes"
-	echo "   User ru"
-	echo "   IdentitiesOnly yes"
+	echo " Host ${h[host]}"
+	echo "   HostName ${h[host_name]}"
+	echo "   Port ${h[port]}"
+	echo "   IdentityFile ${h[identity_file]}"
+	echo "   IdentitiesOnly ${h[identities_only]}"
+	echo "   User ${h[user]}"
 }
 
 for h in "${host_list[@]}"; do
 	if [ "${host[$h]}" = "on" ]; then
 		host_file="$ssh_config_dir/$h"
+
 		send_f >"$host_file"
-		# echo -e "$h"
 	fi
 done
