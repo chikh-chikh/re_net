@@ -44,6 +44,20 @@ nmcli dev wifi
 # #########
 # iw dev wlan0 scan: Поиск точек доступа, доступных через интерфейс wlan0
 #
+
+# #all ipv4
+# hostname --all-ip-addresses | awk '{print $1}'
+# #all ipv6
+# hostname --all-ip-addresses | awk '{print $2}'
+# #получает IPv4-адрес для любого интерфейса, используемого для подключения к указанному удаленному хосту
+# # ip route get 8.8.8.8 | awk '{ print $NF; exit }'
+# ip route get 8.8.8.8 | awk '{ print $7; exit }'
+# # все имена устройств Ethernet и назначенный им IP-адрес,
+# ip --oneline addr show
+# ip -o a s | awk '$3 == "inet" && $2 != "lo" {print $2 ": " $4}' | sed 's/\/.*//'
+# # имена всех сетевых интерфейсов
+# ip a s | awk -F: '/^[^ ]/ {print $2}'
+
 # egrep "signal:|SSID:": Получить линии с уровнем сигнала и идентификаторами SSID из iwэто выход. Теперь результат выглядит следующим образом:
 #
 #         signal: -77.00 dBm         SSID: nameOfAccessPoint1        signal: -71.00 dBm        SSID: nameOfAccessPoint2

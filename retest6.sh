@@ -31,7 +31,7 @@ magenta='\u001b[35;1m'
 reversed='\u001b[7m'
 rc='\u001b[0m'
 
-command source "$this_dir_path"/bin/check_adapters.sh
+command source "$this_dir_path"/bin/check_adapters_new.sh
 
 if [ -f "$keys_file" ]; then
 	command source "$keys_file"
@@ -45,22 +45,32 @@ else
 	echo -e "${yellow} You have a ${#points[@]} wi-fi keys ${rc}"
 fi
 
+echo -e "${yellow} You have a ${#lan_list[@]} ethernet port(s) ${rc}"
+echo -e "${yellow} You have a ${#wan_list[@]} wi-fi render(s) ${rc}"
+
 key_point=("${!points[@]}")
 key_pass_point=("${points[@]}")
 # echo -e "${key_point[@]}"
 # echo -e "${key_pass_point[@]}"
 renderer_list=("NetworkManager" "networkd")
 interface_list=("ethernets" "wifis")
-adapter_list=("$radio_adapter" "$lan_adapter" "eth0" "eth1")
+# adapter_list=("$radio_adapter" "$lan_adapter" "eth0" "eth1")
+lan_list=("${lan_list[@]}")
+wan_list=("${wan_list[@]}")
 dhcp4_list=("true" "no")
 var_router_list=("1" "0" "10")
 var_router2_list=("192.168" "172.20")
 local_ip_list=("27" "9" "10" "12")
 common_list=("no" "wifis" "ethernets" "all")
 
+echo -e "${magenta} lan list: ${lan_list[*]}"
+echo -e "${magenta} wan list: ${wan_list[*]}"
+
 renderer=${renderer_list[0]}
 interface=${interface_list[1]}
-adapter=${adapter_list[0]}
+# adapter=${adapter_list[0]}
+lan=${lan_list[0]}
+wan=${wan_list[0]}
 dhcp4=${dhcp4_list[0]}
 var_router=${var_router_list[0]}
 var_router2=${var_router2_list[0]}
@@ -68,6 +78,9 @@ point=${key_point[0]}
 pass_point=${key_pass_point[0]}
 local_ip=${local_ip_list[0]}
 common=${common_list[0]}
+
+echo -e "${green} lan: ${lan}"
+echo -e "${green} wan: ${wan}"
 
 if [ -f "$vars_file" ]; then
 	command source "$vars_file"
