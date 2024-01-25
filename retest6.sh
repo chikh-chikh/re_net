@@ -6,6 +6,10 @@ net_dir=$(pwd)
 net_file="$net_dir"/01-config.yaml
 this_dir_path="$(dirname "$(realpath "$0")")"
 this_config="$(readlink -f "$0")"
+if [ ! -v "$keysdir" ]; then
+	keysdir=${HOME}/.keysdir
+	# keysdir=${TMP}/keysdir
+fi
 keys_file="$keysdir/netkeys.sh"
 vars_file="$this_dir_path/set_vars.sh"
 
@@ -31,19 +35,16 @@ magenta='\u001b[35;1m'
 reversed='\u001b[7m'
 rc='\u001b[0m'
 
-command source "$this_dir_path"/bin/check_adapters_new.sh
-
 if [ -f "$keys_file" ]; then
 	command source "$keys_file"
 	echo -e "${yellow} You have a ${#points[@]} wi-fi keys ${rc}"
 else
-	keysdir="$HOME/.keysdir"
 	echo "${yellow} keys file not found, creating him in $keysdir ${rc}"
 	mkdir -p "$keysdir"
 	echo -e '#!/bin/bash \ndeclare -A points' >"$keys_file"
-	command source "$keys_file"
-	echo -e "${yellow} You have a ${#points[@]} wi-fi keys ${rc}"
 fi
+
+command source "$this_dir_path"/bin/check_adapters_new.sh
 
 echo -e "${yellow} You have a ${#lan_list[@]} ethernet port(s) ${rc}"
 echo -e "${yellow} You have a ${#wan_list[@]} wi-fi render(s) ${rc}"
