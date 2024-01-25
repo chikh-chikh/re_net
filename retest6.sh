@@ -94,14 +94,14 @@ for a in "$@"; do
 done
 
 if [ "$interface" = wifis ]; then
-	adapter=$radio_adapter
+	adapter=$wan
 elif [ "$interface" = ethernets ]; then
-	adapter=$lan_adapter
+	adapter=$lan
 fi
 
 dhcp4_addresses=["$var_router2"."$var_router"."$local_ip"/24]
 routes_via="$var_router2"."$var_router".1
-nameserv_addr=[8.8.8.8,8.8.4.4]
+nameserv_addr="[8.8.8.8,8.8.4.4]"
 # nameserv_addr=[192.168."${var_router}".1,8.8.8.8]
 
 echo_f() {
@@ -212,14 +212,14 @@ elif [ "$common" != "no" ]; then
 							dhcp4_stat
 						done
 					else
-						adapter=$lan_adapter
+						adapter=$lan
 						interface
 						adapter
 						dhcp4_stat
 					fi
 
 				elif [ "$interface" = wifis ]; then
-					adapter=$radio_adapter
+					adapter=$wan
 					interface
 					adapter
 					access-points
@@ -244,7 +244,7 @@ fi
 
 function whatsmyip() {
 	echo -n "Internal IP: "
-	ifconfig "$radio_adapter" | grep "inet " | awk -F: '{print $1}' | awk '{print $2}'
+	ifconfig "$wan" | grep "inet " | awk -F: '{print $1}' | awk '{print $2}'
 	echo -n "External IP: "
 	dig @resolver4.opendns.com myip.opendns.com +short
 }
@@ -470,7 +470,7 @@ case $option in
 			[ "$common" = "ethernets" ]
 		then
 			count=0
-			for a in "${adapter_list[@]}"; do
+			for a in "${lan_list[@]}"; do
 				count="$(("$count" + 1))"
 				echo -e "${blue} ($count) - add $a"
 			done
@@ -480,7 +480,7 @@ case $option in
 			case $c in
 			"$c")
 				a_ind="$(("$c" - 1))"
-				a="${adapter_list[$a_ind]}"
+				a="${lan_list[$a_ind]}"
 				eth=("${eth[@]}" "$a")
 				# exec
 				;;
