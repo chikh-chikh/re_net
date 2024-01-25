@@ -1,24 +1,24 @@
 #!/bin/bash
 
-for w in $(command ls /sys/class/net | egrep -v "^lo$"); do
+for w in $(command ls /sys/class/net | grep -Ev "^lo$"); do
 	if [ -d /sys/class/net/"$w"/wireless ]; then
 		radio_adapter=$w
-		echo "use $w"
+		# echo "use $w"
 	fi
 	#подключен ли какой-либо физический кабель к порту 0/1 и включен ли интерфейс up/down
 	if [ -f /sys/class/net/"$w"/carrier ] && [ -f /sys/class/net/"$w"/operstate ] && [ ! -d /sys/class/net/"$w"/wireless ]; then
-		if grep "1" /sys/class/net/"$w"/carrier && grep "down" /sys/class/net/"$w"/operstate; then
-			echo "use $w, is free"
+		if grep -q "1" /sys/class/net/"$w"/carrier && grep -q "down" /sys/class/net/"$w"/operstate; then
+			# echo "use $w, is free"
 			lan_adapter=$w
-		elif grep "up" /sys/class/net/"$w"/operstate; then
+		elif grep -q "up" /sys/class/net/"$w"/operstate; then
 			lan_adapter=$w
-			echo "use $w, but it busy"
-		elif ! grep "1" /sys/class/net/"$w"/carrier; then
+			# echo "use $w, but it busy"
+		elif grep -q "0" /sys/class/net/"$w"/carrier; then
 			lan_adapter=$w
-			echo "use $w"
-			echo "please, connect cable to $w interface"
-		else
-			echo "lan_adapter is undefined"
+			# echo "use $w"
+			# echo "please, connect cable to $w interface"
+		# else
+		# 	echo "lan_adapter is undefined"
 		fi
 	fi
 done
