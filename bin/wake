@@ -1,0 +1,138 @@
+#!/bin/bash
+
+# black='\u001b[30;1m'
+red='\u001b[31;1m'
+green='\u001b[32;1m'
+yellow='\u001b[33;1m'
+blue='\u001b[34;1m'
+magenta='\u001b[35;1m'
+# cyan='\u001b[36;1m'
+# white='\u001b[37;1m'
+# background_black='\u001b[40;1m'
+# background_red='\u001b[41;1m'
+# background_green='\u001b[42;1m'
+# background_Yellow='\u001b[43;1m'
+# background_blue='\u001b[44;1m'
+# background_magenta='\u001b[45;1m'
+# background_cyan='\u001b[46;1m'
+# background_white='\u001b[47;1m'
+
+# bold='\u001b[1m'
+# underline='\u001b[4m'
+reversed='\u001b[7m'
+rc='\u001b[0m'
+
+this_dir_path="$(dirname "$(realpath "$0")")"
+this_config="$(readlink -f "$0")"
+
+if [ ! -v "$keysdir" ]; then
+	keysdir=${HOME}/.keysdir
+	# keysdir=${TMP}/keysdir
+fi
+
+mac_file="$keysdir/macfile.sh"
+
+if [ -f "$mac_file" ]; then
+	command source "$mac_file"
+	echo -e "${yellow} You have a ${#mac[@]} mac-address for lan-connection ${rc}"
+else
+	echo "${yellow} mac file not found, creating him in $keysdir ${rc}"
+	mkdir -p "$keysdir"
+	echo -e '#!/bin/bash \ndeclare -A mac' >"$mac_file"
+fi
+
+hosts=("${!mac[@]}")
+macs=("${mac[@]}")
+
+host="${hosts[0]}"
+mac="${macs[0]}"
+
+# for i in "$@"; do
+# 	for a in "${hosts[@]}"; do
+# 		[[ "$i" = "$a" ]] && break
+# 	done
+# 	host="$a"
+# 	mac="${mac[$a]}"
+#
+# 	corr_num=$(("${#hosts[@]}" - 1))
+# 	vars_memory=("${vars_memory[@]}" "host=${hosts[$corr_num]}" "mac=${macs[$corr_num]}")
+#
+# 	echo -e "ddd $host"
+# 	echo -e "ddd $mac"
+# done
+
+vars_memory=()
+for a in "$@"; do
+	vars_memory=("${vars_memory[@]}" "$a")
+	eval "$a"
+done
+
+lan="10.0.0.255"
+
+wake_f() {
+	echo "wakeonlan -p 8 -i $lan $mac"
+}
+up() {
+	wakeonlan -p 8 -i "$lan" "$mac"
+}
+
+# Menu TUI
+echo -e "${magenta}${reversed} wake up ${host} ${rc}"
+echo -e "$(wake_f)"
+echo -e "${blue} (y) confirm ${rc}"
+echo -e "${blue} (a) any hosts ${rc}"
+# echo -e "${blue} (l) change lan ${rc}"
+# echo -e "${blue} (i) change interface ${rc}"
+echo -e "${red} (x) Anything else to exit ${rc}"
+echo -en "${green} ==> ${rc}"
+
+read -r option
+case $option in
+"y")
+	up
+	;;
+
+"a")
+	echo -e "${magenta} setting up hosts ${rc}"
+	count=0
+	for h in "${hosts[@]}"; do
+		count="$(("$count" + 1))"
+		echo -e "${blue} ($count) - $h ${rc} "
+	done
+	echo -e "${blue} (h) - add host ${rc} "
+	echo -e "${red} (x) - exit ${rc}"
+	echo -en "${green} ==> ${rc}"
+
+	read -r op
+	case $op in
+	[0-9])
+		p_ind="$(("$op" - 1))"
+		vars_memory=("${vars_memory[@]}" "host=${hosts[$p_ind]}" "mac=${macs[$p_ind]}")
+		"$this_config" "${vars_memory[@]}"
+		;;
+
+	"h")
+		echo -e "${magenta} add host ${rc}"
+
+		echo -n "enter the host name: "
+		read -r hst
+		echo -n "enter the host mac: "
+		read -r mcc
+
+		echo -e "mac[$hst]=$mcc" >>"$mac_file"
+
+		hosts=("${hosts[@]}" "$hst")
+		macs=("${macs[@]}" "$mcc")
+
+		corr_num=$(("${#hosts[@]}" - 1))
+
+		vars_memory=("${vars_memory[@]}" "host=${hosts[$corr_num]}" "mac=${macs[$corr_num]}")
+		"$this_config" "${vars_memory[@]}"
+		;;
+	esac
+
+	echo -e "${red} (x) exit ${rc}"
+	echo -en "${green} ==> ${rc}"
+	;;
+
+esac
