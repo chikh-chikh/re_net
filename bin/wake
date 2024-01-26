@@ -84,17 +84,36 @@ for i in "$@"; do
 		# vars_memory=("${vars_memory[@]}" "$i")
 		memory+=("$i")
 		check_memory=("${memory[@]}")
-		for v in "${check_memory[@]}"; do
+		update_memory=()
 
-			echo -e "!!!!!v $v"
-			# vars_memory+=("$v")
-
-			eval "$i"
-			echo -e "++++h $host_is"
-			echo -e "++++m $mac_is"
-			echo -e "===== $i"
-			echo -e "                "
+		for c in "${check_memory[@]}"; do
+			if [[ "$i" != "$c" ]]; then
+				echo -e "1. i!=c i=$i c=$c"
+				update_memory+=("$v")
+				eval "$v"
+				eval "$i"
+			fi
+			# vars_memory=("${update_memory[@]}")
 		done
+
+		for u in "${update_memory[@]}"; do
+			if [[ "$i" = "$u" ]]; then
+				echo -e "2. i=o i=$i u=$u"
+				# vars_memory=("$o")
+				vars_memory=("${vars_memory[@]}" "$o")
+
+				eval "$o"
+				# break
+			fi
+		done
+
+		##customdebugger
+		echo -e "++++h $host_is"
+		echo -e "++++m $mac_is"
+		echo -e "====i $i"
+		echo -e "====u $u"
+		echo -e "====c $c"
+		echo -e "                "
 	fi
 done
 
