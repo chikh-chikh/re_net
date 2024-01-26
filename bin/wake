@@ -44,40 +44,52 @@ fi
 hosts=("${!mac[@]}")
 macs=("${mac[@]}")
 
-host="${hosts[0]}"
-mac="${macs[0]}"
-
-# for i in "$@"; do
-# 	for a in "${hosts[@]}"; do
-# 		[[ "$i" = "$a" ]] && break
-# 	done
-# 	host="$a"
-# 	mac="${mac[$a]}"
-#
-# 	corr_num=$(("${#hosts[@]}" - 1))
-# 	vars_memory=("${vars_memory[@]}" "host=${hosts[$corr_num]}" "mac=${macs[$corr_num]}")
-#
-# 	echo -e "ddd $host"
-# 	echo -e "ddd $mac"
-# done
+host_is="${hosts[0]}"
+mac_is="${macs[0]}"
 
 vars_memory=()
-for a in "$@"; do
-	vars_memory=("${vars_memory[@]}" "$a")
-	eval "$a"
+
+# for i in "$@"; do
+#
+# 	if [[ $i = --* ]]; then
+# 		for a in "${hosts[@]}"; do
+# 			name="${-%i}"
+# 			[[ "$name" = "$a" ]] && break
+# 		done
+#
+# 		corr_num=$(("${#hosts[$name]} - 1"))
+# 		host_is="${hosts[$corr_num]}"
+# 		mac_is="${macs[$corr_num]}"
+# 		# vars_memory=("${vars_memory[@]}" "host_is=${hosts[$corr_num]}" "mac_is=${macs[$corr_num]}")
+# 		echo -e "--- $i"
+# 		echo -e "--- $name"
+# 		echo -e "--- $a"
+# 		echo -e "--- $corr_num"
+# 		echo -e "--- $host_is"
+# 		echo -e "--- $mac_is"
+# 	fi
+# done
+for i in "$@"; do
+	if [[ "$i" != --* ]]; then
+		# vars_memory=("${vars_memory[@]}" "$i")
+		vars_memory+=("$i")
+		eval "$i"
+		echo -e "+++ $host_is"
+		echo -e "+++ $mac_is"
+	fi
 done
 
 lan="10.0.0.255"
 
 wake_f() {
-	echo "wakeonlan -p 8 -i $lan $mac"
+	echo "wakeonlan -p 8 -i $lan $mac_is"
 }
 up() {
-	wakeonlan -p 8 -i "$lan" "$mac"
+	wakeonlan -p 8 -i "$lan" "$mac_is"
 }
 
 # Menu TUI
-echo -e "${magenta}${reversed} wake up ${host} ${rc}"
+echo -e "${magenta}${reversed} wake up ${host_is} ${rc}"
 echo -e "$(wake_f)"
 echo -e "${blue} (y) confirm ${rc}"
 echo -e "${blue} (a) any hosts ${rc}"
@@ -107,7 +119,7 @@ case $option in
 	case $op in
 	[0-9])
 		p_ind="$(("$op" - 1))"
-		vars_memory=("${vars_memory[@]}" "host=${hosts[$p_ind]}" "mac=${macs[$p_ind]}")
+		vars_memory=("${vars_memory[@]}" "host_is=${hosts[$p_ind]}" "mac_is=${macs[$p_ind]}")
 		"$this_config" "${vars_memory[@]}"
 		;;
 
@@ -123,10 +135,9 @@ case $option in
 
 		hosts=("${hosts[@]}" "$hst")
 		macs=("${macs[@]}" "$mcc")
-
 		corr_num=$(("${#hosts[@]}" - 1))
 
-		vars_memory=("${vars_memory[@]}" "host=${hosts[$corr_num]}" "mac=${macs[$corr_num]}")
+		vars_memory=("${vars_memory[@]}" "host_is=${hosts[$corr_num]}" "mac_is=${macs[$corr_num]}")
 		"$this_config" "${vars_memory[@]}"
 		;;
 	esac
