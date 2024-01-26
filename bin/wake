@@ -73,18 +73,28 @@ for i in "$@"; do
 		host_is="${hosts[$ind]}"
 		mac_is="${macs[$ind]}"
 
-		# vars_memory=("${vars_memory[@]}" "host_is=$host_is" "mac_is=$mac_is")
 		echo -e "---hhh $host_is"
 		echo -e "---mmm $mac_is"
+
+		vars_memory=("${vars_memory[@]}" "host_is=$host_is" "mac_is=$mac_is")
 	fi
 	# done
 	# for i in "$@"; do
 	if [[ "$i" != --* ]]; then
-		vars_memory=("${vars_memory[@]}" "$i")
-		# vars_memory+=("$i")
-		echo -e "+++ $host_is"
-		echo -e "+++ $mac_is"
-		eval "$i"
+		# vars_memory=("${vars_memory[@]}" "$i")
+		memory+=("$i")
+		check_memory=("${memory[@]}")
+		for v in "${check_memory[@]}"; do
+
+			echo -e "!!!!!v $v"
+			# vars_memory+=("$v")
+
+			eval "$i"
+			echo -e "++++h $host_is"
+			echo -e "++++m $mac_is"
+			echo -e "===== $i"
+			echo -e "                "
+		done
 	fi
 done
 
