@@ -44,38 +44,47 @@ fi
 hosts=("${!mac[@]}")
 macs=("${mac[@]}")
 
-host_is="${hosts[0]}"
-mac_is="${macs[0]}"
-
 vars_memory=()
 
-# for i in "$@"; do
-#
-# 	if [[ $i = --* ]]; then
-# 		for a in "${hosts[@]}"; do
-# 			name="${-%i}"
-# 			[[ "$name" = "$a" ]] && break
-# 		done
-#
-# 		corr_num=$(("${#hosts[$name]} - 1"))
-# 		host_is="${hosts[$corr_num]}"
-# 		mac_is="${macs[$corr_num]}"
-# 		# vars_memory=("${vars_memory[@]}" "host_is=${hosts[$corr_num]}" "mac_is=${macs[$corr_num]}")
-# 		echo -e "--- $i"
-# 		echo -e "--- $name"
-# 		echo -e "--- $a"
-# 		echo -e "--- $corr_num"
-# 		echo -e "--- $host_is"
-# 		echo -e "--- $mac_is"
-# 	fi
-# done
+if [ $# -eq 0 ]; then
+	host_is="${hosts[0]}"
+	mac_is="${macs[0]}"
+	echo -e " rrrrrrrrrrrrr"
+fi
+
 for i in "$@"; do
+	if [[ "$i" = --* ]]; then
+		name="${i//--/}"
+		count=0
+		for a in "${hosts[@]}"; do
+
+			ind="$count"
+			count="$(("$count" + 1))"
+
+			echo -e "---input $i"
+			echo -e "---name $name"
+			echo -e "---var_a $a"
+			echo -e "---index $ind"
+			echo -e "                "
+
+			[[ "$name" = "$a" ]] && break
+		done
+
+		host_is="${hosts[$ind]}"
+		mac_is="${macs[$ind]}"
+
+		# vars_memory=("${vars_memory[@]}" "host_is=$host_is" "mac_is=$mac_is")
+		echo -e "---hhh $host_is"
+		echo -e "---mmm $mac_is"
+	fi
+	# done
+	# for i in "$@"; do
 	if [[ "$i" != --* ]]; then
-		# vars_memory=("${vars_memory[@]}" "$i")
-		vars_memory+=("$i")
-		eval "$i"
+		vars_memory=("${vars_memory[@]}" "$i")
+		# vars_memory+=("$i")
 		echo -e "+++ $host_is"
 		echo -e "+++ $mac_is"
+		eval "$i"
 	fi
 done
 
