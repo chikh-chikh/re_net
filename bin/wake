@@ -43,12 +43,12 @@ fi
 
 hosts=("${!mac[@]}")
 macs=("${mac[@]}")
-
-vars_memory=()
+lans=("10.0.0.255" "192.168.1.255")
 
 if [ $# -eq 0 ]; then
 	host_is="${hosts[0]}"
 	mac_is="${macs[0]}"
+	lan_is="${lans[0]}"
 	echo -e " rrrrrrrrrrrrr"
 fi
 
@@ -78,52 +78,55 @@ for i in "$@"; do
 
 		vars_memory=("${vars_memory[@]}" "host_is=$host_is" "mac_is=$mac_is")
 	fi
-	# done
-	# for i in "$@"; do
+done
+
+vars_memory=()
+check_memory=()
+update_memory=()
+
+for i in "$@"; do
 	if [[ "$i" != --* ]]; then
-		# vars_memory=("${vars_memory[@]}" "$i")
-		memory+=("$i")
-		check_memory=("${memory[@]}")
-		update_memory=()
+		check_memory+=("${i}")
 
 		for c in "${check_memory[@]}"; do
-			if [[ "$i" != "$c" ]]; then
-				echo -e "1. i!=c i=$i c=$c"
-				update_memory+=("$v")
-				eval "$v"
+			name_i="${i%=*}"
+			name_c="${c%=*}"
+			val_i="${i#*=}"
+			val_c="${c#*=}"
+			count=0
+			list=()
+
+			if [[ "$name_i" = "$name_c" ]]; then
+				if [[ "$val_i" = "$val_c" ]]; then
+					a=v
+				else
+					count+=1
+					list+=("$i")
+				fi
+			fi
+			if [[ "$name_i" = "$name_c" ]] && [[ $count = 0 ]]; then
+				update_memory+=("$i")
+			elif [[ $count != 0 ]]; then
+				update_memory+=("${list[0]}")
 				eval "$i"
 			fi
-			# vars_memory=("${update_memory[@]}")
 		done
 
-		for u in "${update_memory[@]}"; do
-			if [[ "$i" = "$u" ]]; then
-				echo -e "2. i=o i=$i u=$u"
-				# vars_memory=("$o")
-				vars_memory=("${vars_memory[@]}" "$o")
-
-				eval "$o"
-				# break
-			fi
-		done
+		# vars_memory=("${vars_memory[@]}" "$i")
+		vars_memory=("${update_memory[@]}")
 
 		##customdebugger
-		echo -e "++++h $host_is"
-		echo -e "++++m $mac_is"
-		echo -e "====i $i"
-		echo -e "====u $u"
-		echo -e "====c $c"
-		echo -e "                "
+		for v in "${vars_memory[@]}"; do
+			echo -e "$v"
+		done
 	fi
 done
 
-lan="10.0.0.255"
-
 wake_f() {
-	echo "wakeonlan -p 8 -i $lan $mac_is"
+	echo "wakeonlan -p 8 -i $lan_is $mac_is"
 }
 up() {
-	wakeonlan -p 8 -i "$lan" "$mac_is"
+	wakeonlan -p 8 -i "$lan_is" "$mac_is"
 }
 
 # Menu TUI
@@ -131,7 +134,7 @@ echo -e "${magenta}${reversed} wake up ${host_is} ${rc}"
 echo -e "$(wake_f)"
 echo -e "${blue} (y) confirm ${rc}"
 echo -e "${blue} (a) any hosts ${rc}"
-# echo -e "${blue} (l) change lan ${rc}"
+echo -e "${blue} (l) change lan ${rc}"
 # echo -e "${blue} (i) change interface ${rc}"
 echo -e "${red} (x) Anything else to exit ${rc}"
 echo -en "${green} ==> ${rc}"
@@ -161,7 +164,7 @@ case $option in
 		"$this_config" "${vars_memory[@]}"
 		;;
 
-	"h")
+	"a")
 		echo -e "${magenta} add host ${rc}"
 
 		echo -n "enter the host name: "
@@ -176,6 +179,28 @@ case $option in
 		corr_num=$(("${#hosts[@]}" - 1))
 
 		vars_memory=("${vars_memory[@]}" "host_is=${hosts[$corr_num]}" "mac_is=${macs[$corr_num]}")
+		"$this_config" "${vars_memory[@]}"
+		;;
+
+	esac
+	;;
+
+"l")
+	echo -e "${magenta} set lan ${rc}"
+	count=0
+	for l in "${lans[@]}"; do
+		count="$(("$count" + 1))"
+		echo -e "${blue} ($count) - $l ${rc} "
+	done
+	echo -e "${blue} (l) - set lan ${rc} "
+	echo -e "${red} (x) - exit ${rc}"
+	echo -en "${green} ==> ${rc}"
+
+	read -r op
+	case $op in
+	[0-9])
+		l_ind="$(("$op" - 1))"
+		vars_memory=("${vars_memory[@]}" "lan_is=${lans[$l_ind]}")
 		"$this_config" "${vars_memory[@]}"
 		;;
 	esac
