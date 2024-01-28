@@ -45,80 +45,40 @@ hosts=("${!mac[@]}")
 macs=("${mac[@]}")
 lans=("10.0.0.255" "192.168.1.255")
 
+vars_memory=()
+
 if [ $# -eq 0 ]; then
 	host_is="${hosts[0]}"
 	mac_is="${macs[0]}"
 	lan_is="${lans[0]}"
-	echo -e " rrrrrrrrrrrrr"
+	echo -e "${green} default: host=$host_is lan=$lan_is $rc"
 fi
 
 for i in "$@"; do
 	if [[ "$i" = --* ]]; then
 		name="${i//--/}"
 		count=0
-		for a in "${hosts[@]}"; do
+		for h in "${hosts[@]}"; do
 
 			ind="$count"
 			count="$(("$count" + 1))"
 
-			echo -e "---input $i"
-			echo -e "---name $name"
-			echo -e "---var_a $a"
-			echo -e "---index $ind"
-			echo -e "                "
-
-			[[ "$name" = "$a" ]] && break
+			[[ "$name" = "$h" ]] && break
 		done
 
 		host_is="${hosts[$ind]}"
 		mac_is="${macs[$ind]}"
 
-		echo -e "---hhh $host_is"
-		echo -e "---mmm $mac_is"
-
 		vars_memory=("${vars_memory[@]}" "host_is=$host_is" "mac_is=$mac_is")
 	fi
-done
 
-vars_memory=()
-check_memory=()
-update_memory=()
-
-for i in "$@"; do
 	if [[ "$i" != --* ]]; then
-		check_memory+=("${i}")
-
-		for c in "${check_memory[@]}"; do
-			name_i="${i%=*}"
-			name_c="${c%=*}"
-			val_i="${i#*=}"
-			val_c="${c#*=}"
-			count=0
-			list=()
-
-			if [[ "$name_i" = "$name_c" ]]; then
-				if [[ "$val_i" = "$val_c" ]]; then
-					a=v
-				else
-					count+=1
-					list+=("$i")
-				fi
-			fi
-			if [[ "$name_i" = "$name_c" ]] && [[ $count = 0 ]]; then
-				update_memory+=("$i")
-			elif [[ $count != 0 ]]; then
-				update_memory+=("${list[0]}")
-				eval "$i"
-			fi
-		done
-
-		# vars_memory=("${vars_memory[@]}" "$i")
-		vars_memory=("${update_memory[@]}")
-
+		vars_memory=("${vars_memory[@]}" "${i}")
+		eval "$i"
 		##customdebugger
-		for v in "${vars_memory[@]}"; do
-			echo -e "$v"
-		done
+		# for v in "${vars_memory[@]}"; do
+		# 	echo -e "$v"
+		# done
 	fi
 done
 
@@ -152,7 +112,7 @@ case $option in
 		count="$(("$count" + 1))"
 		echo -e "${blue} ($count) - $h ${rc} "
 	done
-	echo -e "${blue} (h) - add host ${rc} "
+	echo -e "${green} (a) - add host ${rc} "
 	echo -e "${red} (x) - exit ${rc}"
 	echo -en "${green} ==> ${rc}"
 
