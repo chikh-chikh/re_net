@@ -10,7 +10,8 @@ for w in $(command ls /sys/class/net | grep -Ev "^lo$"); do
 		wan_list+=("$w")
 	fi
 	#подключен ли физический кабель к порту 0/1 и включен ли интерфейс up/down
-	if [ -f /sys/class/net/"$w"/carrier ] && [ -f /sys/class/net/"$w"/operstate ] && [ ! -d /sys/class/net/"$w"/wireless ]; then
+	if [ -f /sys/class/net/"$w"/carrier ] && [ -f /sys/class/net/"$w"/operstate ] \
+    && [ ! -d /sys/class/net/"$w"/wireless ] && [ ! -f /sys/class/net/"$w"/brforward ]; then
 		if grep -q "1" /sys/class/net/"$w"/carrier && grep -q "down" /sys/class/net/"$w"/operstate; then
 			# echo "use $w, is free"
 			# lan_adapter=$w
@@ -41,5 +42,5 @@ done
 # echo -e "$radio_adapter"
 # echo -e "$lan_adapter"
 
-# export radio_adapter
-# export lan_adapter
+# export lan_list
+# export wan_list
