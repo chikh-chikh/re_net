@@ -12,7 +12,7 @@ for w in $(command ls /sys/class/net | grep -Ev "^lo$"); do
 	#подключен ли физический кабель к порту 0/1 и включен ли интерфейс up/down
   #&& [ ! -f /sys/class/net/"$w"/brforward ] exclude docker
 	if [ -f /sys/class/net/"$w"/carrier ] && [ -f /sys/class/net/"$w"/operstate ] \
-    && [ ! -d /sys/class/net/"$w"/wireless ]; then
+    && [ ! -d /sys/class/net/"$w"/wireless ] && [ ! -f /sys/class/net/"$w"/brforward ]; then
 		if grep -q "1" /sys/class/net/"$w"/carrier && grep -q "down" /sys/class/net/"$w"/operstate; then
 			# echo "use $w, is free"
 			# lan_adapter=$w

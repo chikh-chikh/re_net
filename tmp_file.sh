@@ -1,0 +1,14 @@
+#!/bin/bash
+renderer=${renderer_list[0]}
+interface=${interface_list[0]}
+lan=${lan_list[0]}
+wan=${wan_list[0]}
+dhcp4=${dhcp4_list[0]}
+var_router=${var_router_list[0]}
+var_router2=${var_router2_list[0]}
+point=${key_point[0]}
+pass_point=${key_pass_point[0]}
+local_ip=${local_ip_list[0]}
+common=${common_list[0]}
+pts= 
+eth=
