@@ -44,7 +44,7 @@ else
 	echo -e '#!/bin/bash \ndeclare -A points' >"$keys_file"
 fi
 
-command source "$this_dir_path"/bin/check_adapters_for_netplan.sh
+command source "$this_dir_path"/bin/check_adapters.sh
 
 echo -e "${yellow} You have a ${#lan_list[@]} ethernet port(s) ${rc}"
 echo -e "${yellow} You have a ${#wan_list[@]} wi-fi render(s) ${rc}"
