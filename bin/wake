@@ -43,15 +43,19 @@ fi
 
 hosts=("${!mac[@]}")
 macs=("${mac[@]}")
-lans=("10.0.0.255" "192.168.1.255")
+# broadcast=("10.0.0.255" "192.168.1.255")
+# broadcast=$(ip -o a s | awk '$3 == "inet" && $2 != "lo" {print $6}' | tr '\n' ' ')
+# broadcast=$(ip -o a s | awk '$3 == "inet" && $2 != "lo" {print $6}' | tr '\n' ' ')
+# broadcast=("$(ip -o a s | awk '$3 == "inet" && $2 != "lo" {print $6 }')")
+IFS=$'\n' broadcast=($(ip -o a s | awk '$3 == "inet" && $2 != "lo" {print $6}'))
 
 vars_memory=()
 
 if [ $# -eq 0 ]; then
 	host_is="${hosts[0]}"
 	mac_is="${macs[0]}"
-	lan_is="${lans[0]}"
-	echo -e "${green} default: host=$host_is lan=$lan_is $rc"
+	br_is="${broadcast[0]}"
+	# echo -e "${green} default: host=$host_is lan=$br_is $rc"
 fi
 
 for i in "$@"; do
@@ -83,10 +87,10 @@ for i in "$@"; do
 done
 
 wake_f() {
-	echo "wakeonlan -p 8 -i $lan_is $mac_is"
+	echo "wakeonlan -p 8 -i $br_is $mac_is"
 }
 up() {
-	wakeonlan -p 8 -i "$lan_is" "$mac_is"
+	wakeonlan -p 8 -i "$br_is" "$mac_is"
 }
 
 # Menu TUI
@@ -148,7 +152,7 @@ case $option in
 "l")
 	echo -e "${magenta} set lan ${rc}"
 	count=0
-	for l in "${lans[@]}"; do
+	for l in "${broadcast[@]}"; do
 		count="$(("$count" + 1))"
 		echo -e "${blue} ($count) - $l ${rc} "
 	done
@@ -159,8 +163,8 @@ case $option in
 	read -r op
 	case $op in
 	[0-9])
-		l_ind="$(("$op" - 1))"
-		vars_memory=("${vars_memory[@]}" "lan_is=${lans[$l_ind]}")
+		br_ind="$(("$op" - 1))"
+		vars_memory=("${vars_memory[@]}" "br_is=${broadcast[$br_ind]}")
 		"$this_config" "${vars_memory[@]}"
 		;;
 	esac
