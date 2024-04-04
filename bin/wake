@@ -44,19 +44,21 @@ fi
 hosts=("${!mac[@]}")
 macs=("${mac[@]}")
 # broadcast=("10.0.0.255" "192.168.1.255")
-# broadcast=$(ip -o a s | awk '$3 == "inet" && $2 != "lo" {print $6}' | tr '\n' ' ')
-# broadcast=$(ip -o a s | awk '$3 == "inet" && $2 != "lo" {print $6}' | tr '\n' ' ')
-# broadcast=("$(ip -o a s | awk '$3 == "inet" && $2 != "lo" {print $6 }')")
-IFS=$'\n' broadcast=($(ip -o a s | awk '$3 == "inet" && $2 != "lo" {print $6}'))
+# IFS=$'\n' broadcast=($(ip -o a s | awk '$3 == "inet" && $2 != "lo" {print $6}'))
+# mapfile -t broadcast < <(ip -o a s | awk '$3 == "inet" && $2 != "lo" {print $6}')
+broadcast=()
+while IFS= read -r line; do
+	broadcast+=("$line")
+done < <(ip -o a s | awk '$3 == "inet" && $2 != "lo" {print $6}')
 
 vars_memory=()
 
-if [ $# -eq 0 ]; then
-	host_is="${hosts[0]}"
-	mac_is="${macs[0]}"
-	br_is="${broadcast[0]}"
-	# echo -e "${green} default: host=$host_is lan=$br_is $rc"
-fi
+host_is="${hosts[0]}"
+mac_is="${macs[0]}"
+br_is="${broadcast[0]}"
+# if [ $# -eq 0 ]; then
+# 	# echo -e "${green} default: host=$host_is lan=$br_is $rc"
+# fi
 
 for i in "$@"; do
 	if [[ "$i" = --* ]]; then
